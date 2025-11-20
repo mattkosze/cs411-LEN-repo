@@ -30,3 +30,17 @@ def post_message(
 ):
     post = messaging_service.post_message(db, current_user, data)
     return post
+
+@router.delete("/{post_id}", response_model=schemas.DeletePostResult)
+def delete_post(
+    post_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """Allow users to delete their own posts"""
+    post = messaging_service.delete_post(db, current_user, post_id)
+    return schemas.DeletePostResult(
+        success=True,
+        post_id=post.id,
+        status=post.status,
+    )

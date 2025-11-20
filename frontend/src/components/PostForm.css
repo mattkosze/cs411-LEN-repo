@@ -1,0 +1,59 @@
+.post-form {
+  width: 100%;
+}
+
+.post-form h3 {
+  margin-bottom: 1.5rem;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.form-group textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 150px;
+  font-family: inherit;
+}
+
+.char-count {
+  text-align: right;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.form-error {
+  background: #fee;
+  border: 1px solid var(--error);
+  color: var(--error);
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .form-actions button {
+    width: 100%;
+  }
+}
