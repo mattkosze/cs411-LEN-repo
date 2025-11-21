@@ -12,6 +12,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 from datetime import datetime
+from zoneinfo import ZoneInfo
 import enum
 
 from .db import Base
@@ -68,12 +69,24 @@ class Post(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     author_id = Column(Integer, ForeignKey("users.id"))
-    group_id = Column(Integer, nullable=True) #group later
+    # Represents the condition board this post belongs to. Foreign key optional for backward compatibility
+    group_id = Column(Integer, ForeignKey("condition_boards.id"), nullable=True)
     content = Column(Text, nullable=False)
     status = Column(Enum(PostStatus), default=PostStatus.ACTIVE)
-    createdat = Column(DateTime, default=datetime.now())
+    createdat = Column(DateTime, default=datetime.now(ZoneInfo("UTC")))
     author = relationship("User", back_populates="posts")
     reports = relationship("Report", back_populates="post")
+
+class ConditionBoard(Base):
+    __tablename__ = "condition_boards"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), unique=True, nullable=False)
+    description = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.now())
+    updated_at = Column(DateTime, default=datetime.now())
+
+    posts = relationship("Post", backref="board")
 
 class Report(Base):
     __tablename__ = "reports"
@@ -84,7 +97,7 @@ class Report(Base):
     post_id = Column(Integer, ForeignKey("posts.id"), nullable=True)
     reason = Column(Text, nullable=False)
     is_crisis = Column(Boolean, default=False)
-    createdat = Column(DateTime, default=datetime.now())
+    createdat = Column(DateTime, default=datetime.now(ZoneInfo("UTC")))
     status = Column(Enum(ReportStatus), default=ReportStatus.OPEN)
     resolvedat = Column(DateTime, nullable=True)
     resolutionimpact = Column(String(50), nullable=True)

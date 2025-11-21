@@ -29,6 +29,7 @@ function PostForm({ groupId, onPostCreated, onCancel }) {
       await api.createPost({
         group_id: groupId,
         content: content.trim(),
+        posttime: Date.now()
       })
       setContent('')
       onPostCreated()

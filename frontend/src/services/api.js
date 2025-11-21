@@ -45,6 +45,11 @@ export const api = {
     return request(`/posts/${params}`)
   },
 
+  // Get condition boards
+  getBoards: () => {
+    return request('/boards/')
+  },
+
   // Create a new post
   createPost: (data) => {
     return request('/posts/', {
@@ -65,18 +70,5 @@ export const api = {
     return request('/accounts/me/')
   },
 }
-
-// Condition boards configuration
-// In a real app, these would come from the backend
-export const CONDITION_BOARDS = [
-  { id: 1, name: 'Diabetes', description: 'Support and discussion for diabetes management' },
-  { id: 2, name: 'Mental Health', description: 'A safe space for mental health support' },
-  { id: 3, name: 'Autoimmune', description: 'Connecting those with autoimmune conditions' },
-  { id: 4, name: 'Chronic Pain', description: 'Sharing experiences and coping strategies' },
-  { id: 5, name: 'Heart Disease', description: 'Cardiovascular health and support' },
-  { id: 6, name: 'Cancer Support', description: 'Supporting each other through treatment' },
-  { id: 7, name: 'Arthritis', description: 'Living with arthritis' },
-  { id: 8, name: 'Asthma & COPD', description: 'Respiratory health community' },
-]
 
 export default api

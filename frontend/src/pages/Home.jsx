@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { CONDITION_BOARDS, api } from '../services/api'
+import { api } from '../services/api'
 import './Home.css'
 
 function Home() {
@@ -11,7 +11,8 @@ function Home() {
 
   const loadBoardStats = async () => {
     try {
-      const stats = await Promise.all(CONDITION_BOARDS.map(async (board) => {
+      const remoteBoards = await api.getBoards()
+      const stats = await Promise.all(remoteBoards.map(async (board) => {
         try {
           const posts = await api.getPosts(board.id)
           return {
@@ -29,8 +30,7 @@ function Home() {
       setBoards(stats)
     } catch (error) {
       console.error('Error loading board stats:', error)
-      // Fallback to boards without stats
-      setBoards(CONDITION_BOARDS.map(b => ({ ...b, postCount: 0 })))
+      setBoards([])
     } finally {
       setLoading(false)
     }

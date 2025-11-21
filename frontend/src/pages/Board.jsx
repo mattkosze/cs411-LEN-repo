@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { CONDITION_BOARDS, api } from '../services/api'
+import { api } from '../services/api'
 import PostForm from '../components/PostForm'
 import './Board.css'
 
@@ -13,12 +13,24 @@ function Board() {
   const [currentUserId, setCurrentUserId] = useState(null)
   // Track current time to allow relative timestamps to update without refetching
   const [now, setNow] = useState(Date.now())
-  const board = CONDITION_BOARDS.find(b => b.id === parseInt(groupId))
+  const [board, setBoard] = useState(null)
 
   useEffect(() => {
     loadPosts()
     loadCurrentUser()
+    loadBoard()
   }, [groupId])
+
+  const loadBoard = async () => {
+    try {
+      const boards = await api.getBoards()
+      const found = boards.find(b => b.id === parseInt(groupId))
+      setBoard(found || null)
+    } catch (err) {
+      console.error('Error loading board info:', err)
+      setBoard(null)
+    }
+  }
 
   // Updates the post timestamp every minute
   useEffect(() => {
@@ -75,11 +87,10 @@ function Board() {
   }
 
   const formatDate = (dateString) => {
-    // Defensive parsing: fallback if invalid date
     const date = new Date(dateString)
 
     if (isNaN(date.getTime())) return ''
-    const diffMs = now - date.getTime()
+    const diffMs = now - (date.getTime() - (5 * 60 * 60000))
     const diffMins = Math.floor(diffMs / 60000)
     const diffHours = Math.floor(diffMs / 3600000)
     const diffDays = Math.floor(diffMs / 86400000)

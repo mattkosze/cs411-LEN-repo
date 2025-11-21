@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 from datetime import datetime
-from .models import UserRole, PostStatus, ReportStatus, CrisisStatus 
+from .models import UserRole, PostStatus, ReportStatus, CrisisStatus, ConditionBoard 
 
 class UserBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -14,6 +14,7 @@ class UserBase(BaseModel):
 class PostCreate(BaseModel):
     group_id : Optional[int] = None
     content : str
+    posttime : datetime
 
 class PostRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -70,3 +71,16 @@ class DeletePostResult(BaseModel):
     success : bool
     post_id : int
     status : PostStatus
+
+class ConditionBoardBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    name: str
+    description: Optional[str]
+
+class ConditionBoardCreate(BaseModel):
+    name: str = Field(..., max_length=100)
+    description: Optional[str] = None
+
+class ConditionBoardRead(ConditionBoardBase):
+    pass

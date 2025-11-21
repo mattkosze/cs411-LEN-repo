@@ -8,7 +8,7 @@ def post_message(db, author, data):
     
     # in the future we msy validate group_id membership when the group model exists
 
-    post = models.Post(author_id=author.id, group_id=data.group_id,content=data.content)
+    post = models.Post(author_id=author.id, group_id=data.group_id,content=data.content, createdat=data.posttime)
     db.add(post)
     db.commit()
     db.refresh(post)

@@ -1,7 +1,8 @@
 #quick setup using fastapi and taking in the given routers. depending on commit version not all routers may be prsent yet
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import accounts, posts, moderation, crisis
+from .routers import accounts, posts, moderation, crisis, boards
+from .init_db import init_db
 
 app = FastAPI(
     title="LEN - Community Support Backend",
@@ -23,7 +24,13 @@ app.include_router(accounts.router, prefix="/accounts", tags=["accounts"])
 app.include_router(posts.router, prefix="/posts", tags=["posts"])
 app.include_router(moderation.router, prefix="/moderation", tags=["moderation"])
 app.include_router(crisis.router, prefix="/crisis", tags=["crisis"])
+app.include_router(boards.router, prefix="/boards", tags=["boards"])
 
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
+
+@app.on_event("startup")
+def startup_event():
+    # Ensure tables exist and seed boards
+    init_db()

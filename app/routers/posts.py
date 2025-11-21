@@ -26,7 +26,7 @@ def get_posts(
 def post_message(
     data: schemas.PostCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(get_current_user),
 ):
     post = messaging_service.post_message(db, current_user, data)
     return post
