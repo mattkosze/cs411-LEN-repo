@@ -71,7 +71,7 @@ class Post(Base):
     group_id = Column(Integer, nullable=True) #group later
     content = Column(Text, nullable=False)
     status = Column(Enum(PostStatus), default=PostStatus.ACTIVE)
-    createdat = Column(DateTime, default=datetime.utcnow)
+    createdat = Column(DateTime, default=datetime.now())
     author = relationship("User", back_populates="posts")
     reports = relationship("Report", back_populates="post")
 
@@ -84,7 +84,7 @@ class Report(Base):
     post_id = Column(Integer, ForeignKey("posts.id"), nullable=True)
     reason = Column(Text, nullable=False)
     is_crisis = Column(Boolean, default=False)
-    createdat = Column(DateTime, default=datetime.utcnow)
+    createdat = Column(DateTime, default=datetime.now())
     status = Column(Enum(ReportStatus), default=ReportStatus.OPEN)
     resolvedat = Column(DateTime, nullable=True)
     resolutionimpact = Column(String(50), nullable=True)
@@ -100,8 +100,8 @@ class CrisisTicket(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     report_id = Column(Integer, ForeignKey("reports.id"), nullable=True)
     status = Column(Enum(CrisisStatus), default=CrisisStatus.OPEN)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now())
+    updated_at = Column(DateTime, default=datetime.now())
 
 class AuditLogEntry(Base):
     __tablename__ = "audit_log_entries"
@@ -112,4 +112,4 @@ class AuditLogEntry(Base):
     target_type = Column(String(100), nullable=True)
     target_id = Column(Integer, nullable=True)
     details = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now())
