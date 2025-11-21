@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { CONDITION_BOARDS } from '../services/api'
-import { storageService } from '../services/localStorage'
+import { CONDITION_BOARDS, api } from '../services/api'
 import PostForm from '../components/PostForm'
 import './Board.css'
 
@@ -19,46 +18,44 @@ function Board() {
     loadCurrentUser()
   }, [groupId])
 
-  const loadCurrentUser = () => {
+  const loadCurrentUser = async () => {
     try {
-      const user = storageService.getCurrentUser()
+      const user = await api.getCurrentUser()
       setCurrentUserId(user?.id || null)
     } catch (err) {
       console.error('Error loading current user:', err)
-      setCurrentUserId(1) // Default user ID
+      setCurrentUserId(1) // Fallback user ID if it cannot be retrived
     }
   }
 
-  const loadPosts = () => {
+  const loadPosts = async () => {
+    setLoading(true)
     setError(null)
     try {
-      const data = storageService.getPosts(parseInt(groupId))
+      const data = await api.getPosts(parseInt(groupId))
       // Sort by created date, newest first
       const sorted = data.sort((a, b) => new Date(b.createdat) - new Date(a.createdat))
       setPosts(sorted || [])
     } catch (err) {
       console.error('Error loading posts:', err)
       setError(err.message || 'Failed to load posts')
+    } finally {
+      setLoading(false)
     }
   }
 
-  const handlePostCreated = (newPost) => {
-    // Reload posts from storage to get the latest
+  const handlePostCreated = () => {
+    // Reload from the database to get the latest posts
     loadPosts()
     setShowPostForm(false)
-    // Update current user ID if we got it from the new post
-    if (newPost.author && newPost.author.id) {
-      setCurrentUserId(newPost.author.id)
-    }
   }
 
-  const handleDeletePost = (postId) => {
+  const handleDeletePost = async (postId) => {
     if (!window.confirm('Are you sure you want to delete this post?')) {
       return
     }
-
     try {
-      storageService.deletePost(postId)
+      await api.deletePost(postId)
       // Reload posts to reflect deletion
       loadPosts()
     } catch (err) {

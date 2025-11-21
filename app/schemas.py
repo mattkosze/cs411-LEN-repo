@@ -1,29 +1,29 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 from datetime import datetime
 from .models import UserRole, PostStatus, ReportStatus, CrisisStatus 
 
 class UserBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     id : int
-    display_name : str
+    displayname : str
     isanonymous : bool
     role: UserRole
-    class Config:
-        orm_mode = True
 
 class PostCreate(BaseModel):
     group_id : Optional[int] = None
     content : str
 
 class PostRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     id : int
     group_id : Optional[int]
     content : str
     status : PostStatus
     createdat : datetime
     author : UserBase
-    class Config:
-        orm_mode = True
 
 class ReportCreate(BaseModel):
     reported_user_id : Optional[int] = None
@@ -32,6 +32,8 @@ class ReportCreate(BaseModel):
     is_crisis : bool = False
 
 class ReportRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     id : int
     reporting_user_id : int
     reported_user_id : Optional[int]
@@ -42,9 +44,6 @@ class ReportRead(BaseModel):
     resolutionimpact : Optional[str]
     createdat : datetime
     resolvedat : Optional[datetime]
-
-    class Config:
-        orm_mode = True
 
 class DetermineActionInput(BaseModel):
     report_id : int

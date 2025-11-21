@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { storageService } from '../services/localStorage'
+import { api } from "../services/api" 
 import './PostForm.css'
 
 function PostForm({ groupId, onPostCreated, onCancel }) {
@@ -7,9 +7,10 @@ function PostForm({ groupId, onPostCreated, onCancel }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     
+    // Disallow empty messages
     if (!content.trim()) {
       setError('Please enter some content for your post')
       return
@@ -24,15 +25,15 @@ function PostForm({ groupId, onPostCreated, onCancel }) {
     setError(null)
 
     try {
-      const newPost = storageService.createPost({
+      await api.createPost({
         group_id: groupId,
         content: content.trim(),
       })
       setContent('')
-      onPostCreated(newPost)
+      onPostCreated()
     } catch (err) {
       console.error('Error creating post:', err)
-      setError(err.message || 'Failed to create post. Please try again.')
+      setError(err.message || 'Failed to create post. Please try again or come back soon.')
     } finally {
       setLoading(false)
     }

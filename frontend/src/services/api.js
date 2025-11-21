@@ -42,7 +42,7 @@ export const api = {
   // Get posts, optionally filtered by group_id
   getPosts: (groupId = null) => {
     const params = groupId !== null ? `?group_id=${groupId}` : ''
-    return request(`/posts${params}`)
+    return request(`/posts/${params}`)
   },
 
   // Create a new post
@@ -62,7 +62,7 @@ export const api = {
 
   // Get current user info
   getCurrentUser: () => {
-    return request('/accounts/me')
+    return request('/accounts/me/')
   },
 }
 

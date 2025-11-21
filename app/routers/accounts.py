@@ -11,7 +11,7 @@ router = APIRouter()
 class DeleteAccountRequest(BaseModel):
     reason: str
 
-@router.get("/me", response_model=schemas.UserBase)
+@router.get("/me/", response_model=schemas.UserBase)
 def get_current_user_info(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
@@ -19,7 +19,7 @@ def get_current_user_info(
     """Get current user information"""
     return current_user
 
-@router.delete("/me", response_model=schemas.DeleteAccountResult)
+@router.delete("/me/", response_model=schemas.DeleteAccountResult)
 def delete_my_account(
     req: DeleteAccountRequest,
     db: Session = Depends(get_db),

@@ -23,27 +23,18 @@ function Account() {
 
   const loadUserData = async () => {
     try {
-      // In a real app, this would fetch actual user data
-      // For now, we'll use mock data or attempt to get from backend
-      setUserInfo({
-        id: 1,
-        display_name: 'User',
-        isanonymous: false,
-        role: 'user'
-      })
-      
-      // Try to load all posts and filter for current user
-      try {
-        const allPosts = await api.getPosts()
-        // Filter posts by author (would need user ID from auth)
-        setUserPosts(allPosts || [])
-      } catch (err) {
-        console.error('Error loading posts:', err)
-        setUserPosts([])
-      }
+      // Set the User
+      const user = await api.getCurrentUser()
+      setUserInfo(user)
+
+      // Query posts for the selected user from our DB
+      const allPosts = await api.getPosts()
+      setUserPosts(allPosts.filter(post => post.author.id === user.id))
     } catch (error) {
+      // Log any issues loading data
       console.error('Error loading user data:', error)
     } finally {
+      // On success, set loading to false
       setLoading(false)
     }
   }

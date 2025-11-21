@@ -1,11 +1,21 @@
 #quick setup using fastapi and taking in the given routers. depending on commit version not all routers may be prsent yet
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from .routers import accounts, posts, moderation, crisis
 
 app = FastAPI(
     title="LEN - Community Support Backend",
     description="Backend API for LEN patient support platform",
     version="0.1.0",
+)
+
+# Middleware for frontend to integrating with backend 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 #including the routers here

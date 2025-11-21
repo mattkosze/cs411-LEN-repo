@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { CONDITION_BOARDS } from '../services/api'
-import { storageService } from '../services/localStorage'
+import { CONDITION_BOARDS, api } from '../services/api'
 import './Home.css'
 
 function Home() {
@@ -10,11 +9,11 @@ function Home() {
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
 
-  const loadBoardStats = () => {
+  const loadBoardStats = async () => {
     try {
-      const stats = CONDITION_BOARDS.map((board) => {
+      const stats = await Promise.all(CONDITION_BOARDS.map(async (board) => {
         try {
-          const posts = storageService.getPosts(board.id)
+          const posts = await api.getPosts(board.id)
           return {
             ...board,
             postCount: posts?.length || 0,
@@ -26,7 +25,7 @@ function Home() {
             postCount: 0,
           }
         }
-      })
+      }))
       setBoards(stats)
     } catch (error) {
       console.error('Error loading board stats:', error)
@@ -38,7 +37,7 @@ function Home() {
   }
 
   useEffect(() => {
-    // Load post counts for each board from localStorage
+    // Load post counts for each board
     loadBoardStats()
 
     // Refresh stats when window regains focus (user navigates back)
@@ -46,18 +45,9 @@ function Home() {
       loadBoardStats()
     }
     window.addEventListener('focus', handleFocus)
-    
-    // Listen for storage changes (if posts are added/deleted in another tab)
-    const handleStorageChange = (e) => {
-      if (e.key === 'len_posts') {
-        loadBoardStats()
-      }
-    }
-    window.addEventListener('storage', handleStorageChange)
 
     return () => {
       window.removeEventListener('focus', handleFocus)
-      window.removeEventListener('storage', handleStorageChange)
     }
   }, [])
 

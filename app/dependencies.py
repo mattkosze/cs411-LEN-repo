@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from .db import get_db 
 from . import models
 
-def get_current_user(db):
+def get_current_user(db: Session = Depends(get_db)):
     #need to integrate real authentication in the future
     user = db.query(models.User).first()
     if not user:

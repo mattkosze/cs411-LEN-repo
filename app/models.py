@@ -1,3 +1,5 @@
+
+
 from sqlalchemy import (
     Column,
     Integer,
@@ -47,6 +49,18 @@ class User(Base):
     posts = relationship("Post", back_populates="author")
     reports_made = relationship("Report", back_populates="reporting_user", foreign_keys="Report.reported_user_id")
     reports_received = relationship("Report", back_populates="reported_user", foreign_keys="Report.reported_user_id")
+    reports_made = relationship(
+        "Report",
+        back_populates="reporting_user",
+        foreign_keys="Report.reporting_user_id",
+        overlaps="reports_received",
+    )
+    reports_received = relationship(
+        "Report",
+        back_populates="reported_user",
+        foreign_keys="Report.reported_user_id",
+        overlaps="reports_made",
+    )
 
 
 class Post(Base):
@@ -80,7 +94,7 @@ class Report(Base):
     post = relationship("Post", back_populates="reports")
 
 class CrisisTicket(Base):
-    __tablename__ = "audit_log_entries"
+    __tablename__ = "crisis_tickets"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
