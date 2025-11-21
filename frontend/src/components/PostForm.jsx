@@ -17,7 +17,8 @@ function PostForm({ groupId, onPostCreated, onCancel }) {
     }
 
     // Check for "crisis test" phrase (case insensitive)
-    if (content.toLowerCase().includes('crisis test')) {
+    // Expand this in the future to have more comprehensive checking
+    if (content.toLowerCase().includes('end it all' || "ending it" || "kill myself" || "going through it" || "feeling down" || "not feeling good")) {
       alert('moderators have been alerted')
     }
 
