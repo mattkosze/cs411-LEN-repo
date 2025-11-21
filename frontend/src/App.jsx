@@ -32,7 +32,7 @@ function App() {
           <div className="container header-container">
             <div className="header-left">
               <h1>
-                <Link to="/">len</Link>
+                <Link to="/">Len</Link>
               </h1>
             </div>
             <div className="header-right">
