@@ -86,11 +86,8 @@ function Board() {
     }
   }
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString)
-
-    if (isNaN(date.getTime())) return ''
-    const diffMs = now - (date.getTime() - (5 * 60 * 60000))
+  const formatDate = (date) => {    
+    const diffMs = now - date
     const diffMins = Math.floor(diffMs / 60000)
     const diffHours = Math.floor(diffMs / 3600000)
     const diffDays = Math.floor(diffMs / 86400000)

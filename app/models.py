@@ -8,7 +8,7 @@ from sqlalchemy import (
     Text,
     ForeignKey,
     Enum,
-    DateTime,
+    Float,
 )
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -73,7 +73,7 @@ class Post(Base):
     group_id = Column(Integer, ForeignKey("condition_boards.id"), nullable=True)
     content = Column(Text, nullable=False)
     status = Column(Enum(PostStatus), default=PostStatus.ACTIVE)
-    createdat = Column(DateTime, default=datetime.now(ZoneInfo("UTC")))
+    createdat = Column(Float, default=datetime.now().timestamp())
     author = relationship("User", back_populates="posts")
     reports = relationship("Report", back_populates="post")
 
@@ -83,8 +83,9 @@ class ConditionBoard(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), unique=True, nullable=False)
     description = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.now())
-    updated_at = Column(DateTime, default=datetime.now())
+    createdat = Column(Float, default=datetime.now().timestamp())
+    updated_at = Column(Float, default=datetime.now().timestamp())
+
 
     posts = relationship("Post", backref="board")
 
@@ -97,9 +98,9 @@ class Report(Base):
     post_id = Column(Integer, ForeignKey("posts.id"), nullable=True)
     reason = Column(Text, nullable=False)
     is_crisis = Column(Boolean, default=False)
-    createdat = Column(DateTime, default=datetime.now(ZoneInfo("UTC")))
+    createdat = Column(Float, default=datetime.now().timestamp())
     status = Column(Enum(ReportStatus), default=ReportStatus.OPEN)
-    resolvedat = Column(DateTime, nullable=True)
+    resolvedat = Column(Float, default=datetime.now().timestamp())
     resolutionimpact = Column(String(50), nullable=True)
 
     reported_user = relationship("User", back_populates="reports_received", foreign_keys=[reported_user_id])
@@ -113,8 +114,9 @@ class CrisisTicket(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     report_id = Column(Integer, ForeignKey("reports.id"), nullable=True)
     status = Column(Enum(CrisisStatus), default=CrisisStatus.OPEN)
-    created_at = Column(DateTime, default=datetime.now())
-    updated_at = Column(DateTime, default=datetime.now())
+    createdat = Column(Float, default=datetime.now().timestamp())
+    updated_at = Column(Float, default=datetime.now().timestamp())
+
 
 class AuditLogEntry(Base):
     __tablename__ = "audit_log_entries"
@@ -125,4 +127,4 @@ class AuditLogEntry(Base):
     target_type = Column(String(100), nullable=True)
     target_id = Column(Integer, nullable=True)
     details = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.now())
+    createdat = Column(Float, default=datetime.now().timestamp())

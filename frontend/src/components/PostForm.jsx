@@ -24,7 +24,6 @@ function PostForm({ groupId, onPostCreated, onCancel }) {
 
     setLoading(true)
     setError(null)
-
     try {
       await api.createPost({
         group_id: groupId,

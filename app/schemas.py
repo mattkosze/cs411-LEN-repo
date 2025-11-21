@@ -14,7 +14,7 @@ class UserBase(BaseModel):
 class PostCreate(BaseModel):
     group_id : Optional[int] = None
     content : str
-    posttime : datetime
+    posttime : float
 
 class PostRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -23,7 +23,7 @@ class PostRead(BaseModel):
     group_id : Optional[int]
     content : str
     status : PostStatus
-    createdat : datetime
+    createdat : float
     author : UserBase
 
 class ReportCreate(BaseModel):
@@ -43,8 +43,8 @@ class ReportRead(BaseModel):
     is_crisis : bool
     status : ReportStatus
     resolutionimpact : Optional[str]
-    createdat : datetime
-    resolvedat : Optional[datetime]
+    createdat : float
+    resolvedat : Optional[float]
 
 class DetermineActionInput(BaseModel):
     report_id : int
