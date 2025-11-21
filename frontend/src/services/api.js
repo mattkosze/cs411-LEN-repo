@@ -69,6 +69,15 @@ export const api = {
   getCurrentUser: () => {
     return request('/accounts/me/')
   },
+
+  // Alert mods if crisis
+  crisisEscalation: (data) => {
+    return request('/crisis/escalate', {
+      method: 'POST',
+      body: data
+    })
+  },
+  
 }
 
 export default api

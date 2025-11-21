@@ -3,19 +3,28 @@
 from sqlalchemy.orm import Session
 from .. import models, schemas
 
-def escalate_crisis(db, data):
+def escalate_crisis(db: Session, data: schemas.CrisisEscalationInput):
     #creates a ticket for the occassion (crisis), and audit log gets recorded.
-    ticket = models.CrisisTicket(user_id=data.user_id,report_id=data.report_id)
+    
+    # Create crisis ticket with optional user_id and report_id
+    ticket = models.CrisisTicket(
+        user_id=data.user_id,
+        report_id=data.report_id
+    )
 
     db.add(ticket)
-
-    details = data.content_snip or ""
-    audit = models.AuditLogEntry(actor_id=None,action_type="crisis_escalation",target_type=None, details=details[:100])
-    db.add(audit)
     db.commit()
     db.refresh(ticket)
 
-    audit.target_id = ticket.id
+    # Create audit log entry with crisis details
+    details = data.content_snip or "Crisis escalation without content details"
+    audit = models.AuditLogEntry(
+        actor_id=None,
+        action_type="crisis_escalation",
+        target_type="CrisisTicket",
+        target_id=ticket.id,
+        details=details[:100]
+    )
     db.add(audit)
     db.commit()
 

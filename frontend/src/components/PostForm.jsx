@@ -16,10 +16,21 @@ function PostForm({ groupId, onPostCreated, onCancel }) {
       return
     }
 
-    // Check for "crisis test" phrase (case insensitive)
+    // Check for crisis keywords (case insensitive)
     // Expand this in the future to have more comprehensive checking
-    if (content.toLowerCase().includes('end it all' || "ending it" || "kill myself" || "going through it" || "feeling down" || "not feeling good")) {
-      alert('moderators have been alerted')
+    const crisisKeywords = ['end it all', 'ending it', 'kill myself', 'going through it', 'feeling down', 'not feeling good', 'suicide', 'suicidal', 'want to die', 'harm myself']
+    const contentLower = content.toLowerCase()
+    const isCrisis = crisisKeywords.some(keyword => contentLower.includes(keyword))
+    
+    if (isCrisis) {
+      alert('Crisis detected. Moderators have been alerted and support resources are being prepared.')
+      try {
+        await api.crisisEscalation({
+          content_snip: content        
+        })
+      } catch (err) {
+        console.error('Error escalating crisis:', err)
+      }
     }
 
     setLoading(true)

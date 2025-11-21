@@ -8,7 +8,7 @@ from ..services import crisis_service
 router = APIRouter()
 
 @router.post("/escalate", response_model=schemas.CrisisEscalationResult)
-def escalate_crisis(data, db):
+def escalate_crisis(data: schemas.CrisisEscalationInput, db: Session = Depends(get_db)):
     ticket = crisis_service.escalate_crisis(db, data)
     return schemas.CrisisEscalationResult(
         ticket_id=ticket.id,
