@@ -2,10 +2,11 @@ from sqlalchemy.orm import Session
 from .. import models, schemas
 
 def delete_account(db, user, reason):
-    user.display_name = "Deleted User"
+    user.displayname = "Deleted User"
     user.email = None
     user.hashedpassword = None
     user.isanonymous = True
+    user.is_active = False
 
     db.add(user)
 

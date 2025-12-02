@@ -1,14 +1,25 @@
-// Use environment variable or default to localhost:8000
-// If VITE_API_URL is not set, use direct connection (CORS enabled)
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+// Set to default to localhost:8000
+const API_BASE_URL = 'http://localhost:8000'
+
+// Helper to get/set simulated user ID
+const SIMULATED_USER_KEY = 'len_simulated_user_id'
 
 async function request(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`
+  
+  // Add simulated user header if set
+  const simulatedUserId = localStorage.getItem(SIMULATED_USER_KEY)
+  const headers = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  }
+  
+  if (simulatedUserId) {
+    headers['x-user-id'] = simulatedUserId
+  }
+
   const config = {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
+    headers,
     ...options,
   }
 
@@ -24,7 +35,7 @@ async function request(endpoint, options = {}) {
       throw new Error(error.detail || `HTTP error! status: ${response.status}`)
     }
 
-    // Handle empty responses
+    //handles empty responses
     const contentType = response.headers.get('content-type')
     if (contentType && contentType.includes('application/json')) {
       return await response.json()
@@ -76,9 +87,35 @@ export const api = {
     return request('/accounts/me/')
   },
 
+  // Get all users (for dev switcher)
+  getUsers: () => {
+    return request('/accounts/')
+  },
+
+  // Helper methods for user simulation
+  setSimulatedUser: (userId) => {
+    if (userId) {
+      localStorage.setItem(SIMULATED_USER_KEY, userId)
+    } else {
+      localStorage.removeItem(SIMULATED_USER_KEY)
+    }
+  },
+
+  getSimulatedUser: () => {
+    return localStorage.getItem(SIMULATED_USER_KEY)
+  },
+
   // Alert mods if crisis
   crisisEscalation: (data) => {
     return request('/crisis/escalate', {
+      method: 'POST',
+      body: data
+    })
+  },
+
+  // Report a post
+  reportPost: (postId, data) => {
+    return request(`/posts/${postId}/report`, {
       method: 'POST',
       body: data
     })

@@ -37,6 +37,12 @@ class CrisisStatus(str, enum.Enum):
     IN_REVIEW = "in_review"
     CLOSED = "closed"
 
+class ReportReason(str, enum.Enum):
+    HARASSMENT = "harassment"
+    SPAM = "spam"
+    INAPPROPRIATE = "inappropriate"
+    CRISIS = "crisis"
+
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
@@ -46,6 +52,7 @@ class User(Base):
     isanonymous = Column(Boolean, default=True)
     role = Column(Enum(UserRole), default=UserRole.USER)
     isbanned = Column(Boolean, default=False)
+    is_active = Column(Boolean, default=True)
 
     posts = relationship("Post", back_populates="author")
     reports_made = relationship("Report", back_populates="reporting_user", foreign_keys="Report.reported_user_id")
@@ -96,7 +103,8 @@ class Report(Base):
     reporting_user_id = Column(Integer, ForeignKey("users.id"))
     reported_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     post_id = Column(Integer, ForeignKey("posts.id"), nullable=True)
-    reason = Column(Text, nullable=False)
+    reason = Column(Enum(ReportReason), nullable=False)
+    details = Column(Text, nullable=True)  # Optional additional details from reporter
     is_crisis = Column(Boolean, default=False)
     createdat = Column(Float, default=datetime.now().timestamp())
     status = Column(Enum(ReportStatus), default=ReportStatus.OPEN)

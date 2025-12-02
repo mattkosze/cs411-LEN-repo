@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { api } from '../services/api'
 import PostForm from '../components/PostForm'
+import ReportModal from '../components/ReportModal'
 import './Board.css'
 
 function Board() {
@@ -16,6 +17,8 @@ function Board() {
   const [now, setNow] = useState(Date.now())
   const [board, setBoard] = useState(null)
   const [boardLoading, setBoardLoading] = useState(true)
+  const [reportingPost, setReportingPost] = useState(null)
+  const [isReportSubmitting, setIsReportSubmitting] = useState(false)
 
   useEffect(() => {
     loadPosts()
@@ -37,7 +40,7 @@ function Board() {
     }
   }
 
-  // Updates the post timestamp every minute
+  //updates post timestamp every minute
   useEffect(() => {
     const interval = setInterval(() => {
       setNow(Date.now())
@@ -75,7 +78,7 @@ function Board() {
   }
 
   const handlePostCreated = () => {
-    // Reload from the database to get the latest posts
+    //reloads from the database to get the latest posts
     loadPosts()
     setShowPostForm(false)
   }
@@ -113,6 +116,30 @@ function Board() {
     }
   }
 
+  const handleReportPost = (post) => {
+    setReportingPost(post)
+  }
+
+  const handleReportSubmit = async (reportData) => {
+    setIsReportSubmitting(true)
+    try {
+      await api.reportPost(reportingPost.id, reportData)
+      setReportingPost(null)
+      alert('Thank you for your report. Our moderation team will review it shortly.')
+    } catch (err) {
+      console.error('Error submitting report:', err)
+      throw err
+    } finally {
+      setIsReportSubmitting(false)
+    }
+  }
+
+  const handleReportClose = () => {
+    if (!isReportSubmitting) {
+      setReportingPost(null)
+    }
+  }
+
   const formatDate = (timestamp) => {
     // Handle both timestamp (number) and Date object
     const date = typeof timestamp === 'number' ? new Date(timestamp) : timestamp
@@ -125,7 +152,8 @@ function Board() {
     if (diffMins < 60) return `${diffMins} ${diffMins === 1 ? 'minute' : 'minutes'} ago`
     if (diffHours < 24) return `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`
     if (diffDays < 7) return `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`
-    return date.toLocaleDateString()
+    //converts timestamp to Date object for older posts
+    return new Date(timestamp).toLocaleDateString()
   }
 
   // Show loading state while board is being loaded
@@ -215,9 +243,18 @@ function Board() {
                 </div>
               )}
               {post.status === 'active' && (
-                ((currentUserId && post.author && post.author.id === currentUserId) || 
-                 (currentUserRole === 'moderator' || currentUserRole === 'admin')) && (
-                  <div className="post-actions">
+                <div className="post-actions">
+                  {currentUserId && post.author && post.author.id !== currentUserId && (
+                    <button
+                      className="btn-report"
+                      onClick={() => handleReportPost(post)}
+                      aria-label="Report post"
+                    >
+                      Report
+                    </button>
+                  )}
+                  {((currentUserId && post.author && post.author.id === currentUserId) || 
+                   (currentUserRole === 'moderator' || currentUserRole === 'admin')) && (
                     <button
                       className="btn-delete"
                       onClick={() => handleDeletePost(post.id)}
@@ -228,12 +265,21 @@ function Board() {
                         ? 'Delete (Mod)' 
                         : 'Delete'}
                     </button>
-                  </div>
-                )
+                  )}
+                </div>
               )}
             </article>
           ))}
         </div>
+      )}
+
+      {reportingPost && (
+        <ReportModal
+          post={reportingPost}
+          onClose={handleReportClose}
+          onSubmit={handleReportSubmit}
+          isSubmitting={isReportSubmitting}
+        />
       )}
     </div>
   )

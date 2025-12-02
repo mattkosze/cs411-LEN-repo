@@ -4,6 +4,7 @@ import Home from './pages/Home'
 import Board from './pages/Board'
 import Account from './pages/Account'
 import Moderation from './pages/Moderation'
+import UserSwitcher from './components/UserSwitcher'
 import { api } from './services/api'
 import './App.css'
 
@@ -100,6 +101,7 @@ function App() {
             <p>&copy; 2025 len. A safe space for support and connection.</p>
           </div>
         </footer>
+        <UserSwitcher />
       </div>
     </Router>
   )
