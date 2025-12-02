@@ -12,21 +12,45 @@ def init_db():
     try:
         # Seed boards
         seed_initial_boards(db)
-        # Seed a dummy guest user if none exist
-        if db.query(User).count() == 0:
-            guest = User(
-                email=None,
-                hashedpassword=None,
-                displayname="Guest",
-                isanonymous=True,
-                role=UserRole.USER,
-                isbanned=False,
-            )
-            db.add(guest)
-            db.commit()
-            print("Created guest user")
-        else:
-            print("Users already present; skipping guest creation")
+        # Seed initial users
+        initial_users = [
+            {
+                "email": "user1@example.com",
+                "displayname": "User 1",
+                "role": UserRole.USER,
+                "isanonymous": False
+            },
+            {
+                "email": "user2@example.com",
+                "displayname": "User 2",
+                "role": UserRole.USER,
+                "isanonymous": False
+            },
+            {
+                "email": "mod@example.com",
+                "displayname": "Moderator",
+                "role": UserRole.MODERATOR,
+                "isanonymous": False
+            }
+        ]
+
+        for user_data in initial_users:
+            existing_user = db.query(User).filter(User.email == user_data["email"]).first()
+            if not existing_user:
+                new_user = User(
+                    email=user_data["email"],
+                    hashedpassword="hashed_password_placeholder", # In a real app, hash this
+                    displayname=user_data["displayname"],
+                    isanonymous=user_data["isanonymous"],
+                    role=user_data["role"],
+                    isbanned=False,
+                )
+                db.add(new_user)
+                print(f"Created user: {user_data['displayname']}")
+            else:
+                print(f"User already exists: {user_data['displayname']}")
+        
+        db.commit()
     finally:
         db.close()
 

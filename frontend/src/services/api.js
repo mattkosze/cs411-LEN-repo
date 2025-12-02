@@ -1,13 +1,25 @@
 // Set to default to localhost:8000
 const API_BASE_URL = 'http://localhost:8000'
 
+// Helper to get/set simulated user ID
+const SIMULATED_USER_KEY = 'len_simulated_user_id'
+
 async function request(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`
+  
+  // Add simulated user header if set
+  const simulatedUserId = localStorage.getItem(SIMULATED_USER_KEY)
+  const headers = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  }
+  
+  if (simulatedUserId) {
+    headers['x-user-id'] = simulatedUserId
+  }
+
   const config = {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
+    headers,
     ...options,
   }
 
@@ -73,6 +85,24 @@ export const api = {
   // Get current user info
   getCurrentUser: () => {
     return request('/accounts/me/')
+  },
+
+  // Get all users (for dev switcher)
+  getUsers: () => {
+    return request('/accounts/')
+  },
+
+  // Helper methods for user simulation
+  setSimulatedUser: (userId) => {
+    if (userId) {
+      localStorage.setItem(SIMULATED_USER_KEY, userId)
+    } else {
+      localStorage.removeItem(SIMULATED_USER_KEY)
+    }
+  },
+
+  getSimulatedUser: () => {
+    return localStorage.getItem(SIMULATED_USER_KEY)
   },
 
   // Alert mods if crisis
