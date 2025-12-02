@@ -13,7 +13,7 @@ app = FastAPI(
 # Middleware for frontend to integrating with backend 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -25,6 +25,15 @@ app.include_router(posts.router, prefix="/posts", tags=["posts"])
 app.include_router(moderation.router, prefix="/moderation", tags=["moderation"])
 app.include_router(crisis.router, prefix="/crisis", tags=["crisis"])
 app.include_router(boards.router, prefix="/boards", tags=["boards"])
+
+@app.get("/")
+def root():
+    return {
+        "message": "LEN Backend API",
+        "status": "running",
+        "docs": "/docs",
+        "health": "/health"
+    }
 
 @app.get("/health")
 def health_check():

@@ -90,7 +90,7 @@ function Account() {
                 <div className="profile-info">
                   <div className="info-row">
                     <label>Display Name:</label>
-                    <span>{userInfo.isanonymous ? 'Anonymous' : userInfo.display_name}</span>
+                    <span>{userInfo.isanonymous ? 'Anonymous' : userInfo.displayname}</span>
                   </div>
                   <div className="info-row">
                     <label>User ID:</label>
@@ -101,6 +101,11 @@ function Account() {
                     <span className={`role-badge role-${userInfo.role}`}>
                       {userInfo.role}
                     </span>
+                    {(userInfo.role === 'moderator' || userInfo.role === 'admin') && (
+                      <Link to="/moderation" className="moderation-link-inline">
+                        Go to Moderation Dashboard →
+                      </Link>
+                    )}
                   </div>
                   <div className="info-row">
                     <label>Anonymous Mode:</label>
@@ -156,7 +161,7 @@ function Account() {
               <div className="settings-list">
                 <div className="setting-item">
                   <label>Display Name</label>
-                  <input type="text" placeholder="Your display name" defaultValue={userInfo?.display_name || ''} />
+                  <input type="text" placeholder="Your display name" defaultValue={userInfo?.displayname || ''} />
                   <p className="setting-hint">This name will be shown on your posts</p>
                 </div>
                 <div className="setting-item">

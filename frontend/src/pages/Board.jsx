@@ -11,9 +11,11 @@ function Board() {
   const [error, setError] = useState(null)
   const [showPostForm, setShowPostForm] = useState(false)
   const [currentUserId, setCurrentUserId] = useState(null)
+  const [currentUserRole, setCurrentUserRole] = useState(null)
   // Track current time to allow relative timestamps to update without refetching
   const [now, setNow] = useState(Date.now())
   const [board, setBoard] = useState(null)
+  const [boardLoading, setBoardLoading] = useState(true)
 
   useEffect(() => {
     loadPosts()
@@ -22,6 +24,7 @@ function Board() {
   }, [groupId])
 
   const loadBoard = async () => {
+    setBoardLoading(true)
     try {
       const boards = await api.getBoards()
       const found = boards.find(b => b.id === parseInt(groupId))
@@ -29,6 +32,8 @@ function Board() {
     } catch (err) {
       console.error('Error loading board info:', err)
       setBoard(null)
+    } finally {
+      setBoardLoading(false)
     }
   }
 
@@ -44,9 +49,11 @@ function Board() {
     try {
       const user = await api.getCurrentUser()
       setCurrentUserId(user?.id || null)
+      setCurrentUserRole(user?.role || 'user')
     } catch (err) {
       console.error('Error loading current user:', err)
       setCurrentUserId(1) // Fallback user ID if it cannot be retrived
+      setCurrentUserRole('user')
     }
   }
 
@@ -55,12 +62,13 @@ function Board() {
     setError(null)
     try {
       const data = await api.getPosts(parseInt(groupId))
-      // Sort by created date, newest first
-      const sorted = data.sort((a, b) => new Date(b.createdat) - new Date(a.createdat))
-      setPosts(sorted || [])
+      // Sort by created date, newest first (createdat is already a timestamp)
+      const sorted = (data || []).sort((a, b) => (b.createdat || 0) - (a.createdat || 0))
+      setPosts(sorted)
     } catch (err) {
       console.error('Error loading posts:', err)
       setError(err.message || 'Failed to load posts')
+      setPosts([])
     } finally {
       setLoading(false)
     }
@@ -73,21 +81,42 @@ function Board() {
   }
 
   const handleDeletePost = async (postId) => {
-    if (!window.confirm('Are you sure you want to delete this post?')) {
-      return
-    }
-    try {
-      await api.deletePost(postId)
-      // Reload posts to reflect deletion
-      loadPosts()
-    } catch (err) {
-      console.error('Error deleting post:', err)
-      alert('Failed to delete post: ' + (err.message || 'Unknown error'))
+    const isModerator = currentUserRole === 'moderator' || currentUserRole === 'admin'
+    
+    if (isModerator) {
+      const reason = prompt('Enter reason for deletion (required for moderators):')
+      if (!reason || !reason.trim()) {
+        alert('Reason is required for moderator deletions')
+        return
+      }
+      if (!window.confirm('Are you sure you want to delete this post as a moderator?')) {
+        return
+      }
+      try {
+        await api.deletePostAsModerator(postId, reason)
+        loadPosts()
+      } catch (err) {
+        console.error('Error deleting post:', err)
+        alert('Failed to delete post: ' + (err.message || 'Unknown error'))
+      }
+    } else {
+      if (!window.confirm('Are you sure you want to delete this post?')) {
+        return
+      }
+      try {
+        await api.deletePost(postId)
+        loadPosts()
+      } catch (err) {
+        console.error('Error deleting post:', err)
+        alert('Failed to delete post: ' + (err.message || 'Unknown error'))
+      }
     }
   }
 
-  const formatDate = (date) => {    
-    const diffMs = now - date
+  const formatDate = (timestamp) => {
+    // Handle both timestamp (number) and Date object
+    const date = typeof timestamp === 'number' ? new Date(timestamp) : timestamp
+    const diffMs = now - date.getTime()
     const diffMins = Math.floor(diffMs / 60000)
     const diffHours = Math.floor(diffMs / 3600000)
     const diffDays = Math.floor(diffMs / 86400000)
@@ -99,6 +128,17 @@ function Board() {
     return date.toLocaleDateString()
   }
 
+  // Show loading state while board is being loaded
+  if (boardLoading) {
+    return (
+      <div className="loading-container">
+        <div className="spinner"></div>
+        <p>Loading board...</p>
+      </div>
+    )
+  }
+
+  // Show error if board not found after loading
   if (!board) {
     return (
       <div className="board-error">
@@ -157,13 +197,8 @@ function Board() {
               <div className="post-header">
                 <div className="post-author">
                   <span className="author-name">
-                    {post.author.isanonymous ? 'Anonymous' : post.author.display_name}
+                    {post.author.isanonymous ? 'Anonymous' : post.author.displayname}
                   </span>
-                  {post.author.role !== 'user' && (
-                    <span className={`author-role role-${post.author.role}`}>
-                      {post.author.role}
-                    </span>
-                  )}
                 </div>
                 <time className="post-time" dateTime={post.createdat}>
                   {formatDate(post.createdat)}
@@ -179,16 +214,22 @@ function Board() {
                   Status: <span className={`status-${post.status}`}>{post.status}</span>
                 </div>
               )}
-              {currentUserId && post.author && post.author.id === currentUserId && post.status === 'active' && (
-                <div className="post-actions">
-                  <button
-                    className="btn-delete"
-                    onClick={() => handleDeletePost(post.id)}
-                    aria-label="Delete post"
-                  >
-                    Delete
-                  </button>
-                </div>
+              {post.status === 'active' && (
+                ((currentUserId && post.author && post.author.id === currentUserId) || 
+                 (currentUserRole === 'moderator' || currentUserRole === 'admin')) && (
+                  <div className="post-actions">
+                    <button
+                      className="btn-delete"
+                      onClick={() => handleDeletePost(post.id)}
+                      aria-label="Delete post"
+                    >
+                      {(currentUserRole === 'moderator' || currentUserRole === 'admin') && 
+                       (!post.author || post.author.id !== currentUserId) 
+                        ? 'Delete (Mod)' 
+                        : 'Delete'}
+                    </button>
+                  </div>
+                )
               )}
             </article>
           ))}

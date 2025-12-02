@@ -29,7 +29,7 @@ def determine_action(db, moderator, data):
             if data.action == "ban":
                 reported_user.isbanned = True
 
-    audit = models.AuditLogEntry(actor_id=moderator.id, action_type=f"moderation_{data.action}", target_type="Report", target_id=report.id, details=data.moderator_note or "")
+    audit = models.AuditLogEntry(actor_id=moderator.id, action_type=f"moderation_{data.action}", target_type="Report", target_id=report.id, details=data.mod_note or "")
     db.add(audit)
     db.commit()
     db.refresh(report)

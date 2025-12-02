@@ -3,11 +3,28 @@ import { useState, useEffect, useRef } from 'react'
 import Home from './pages/Home'
 import Board from './pages/Board'
 import Account from './pages/Account'
+import Moderation from './pages/Moderation'
+import { api } from './services/api'
 import './App.css'
 
 function App() {
   const [showAccountDropdown, setShowAccountDropdown] = useState(false)
+  const [userRole, setUserRole] = useState(null)
   const accountMenuRef = useRef(null)
+
+  useEffect(() => {
+    loadUserRole()
+  }, [])
+
+  const loadUserRole = async () => {
+    try {
+      const user = await api.getCurrentUser()
+      setUserRole(user?.role || 'user')
+    } catch (err) {
+      console.error('Error loading user role:', err)
+      setUserRole('user')
+    }
+  }
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -25,6 +42,8 @@ function App() {
     }
   }, [showAccountDropdown])
 
+  const isModerator = userRole === 'moderator' || userRole === 'admin'
+
   return (
     <Router>
       <div className="app">
@@ -36,6 +55,11 @@ function App() {
               </h1>
             </div>
             <div className="header-right">
+              {isModerator && (
+                <Link to="/moderation" className="moderation-link">
+                  Moderation
+                </Link>
+              )}
               <div className="account-menu" ref={accountMenuRef}>
                 <button 
                   className="account-button"
@@ -67,6 +91,7 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/board/:groupId" element={<Board />} />
               <Route path="/account" element={<Account />} />
+              <Route path="/moderation" element={<Moderation />} />
             </Routes>
           </div>
         </main>

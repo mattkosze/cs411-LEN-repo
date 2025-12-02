@@ -1,3 +1,5 @@
+// Use environment variable or default to localhost:8000
+// If VITE_API_URL is not set, use direct connection (CORS enabled)
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 async function request(endpoint, options = {}) {
@@ -30,9 +32,13 @@ async function request(endpoint, options = {}) {
     return null
   } catch (error) {
     console.error('API request failed:', error)
+    console.error('Request URL was:', url)
     // Provide more helpful error messages
-    if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
-      throw new Error('Unable to connect to the server. Please make sure the backend is running on http://localhost:8000')
+    if (error.message === 'Failed to fetch' || error.name === 'TypeError' || error.message.includes('fetch')) {
+      const errorMsg = `Unable to connect to the server at ${API_BASE_URL}${endpoint}. ` +
+        `Please make sure the backend is running on http://localhost:8000. ` +
+        `Error: ${error.message}`
+      throw new Error(errorMsg)
     }
     throw error
   }
@@ -75,6 +81,31 @@ export const api = {
     return request('/crisis/escalate', {
       method: 'POST',
       body: data
+    })
+  },
+
+  // Moderation endpoints (moderator only)
+  getReports: (status = null) => {
+    const params = status ? `?status=${status}` : ''
+    return request(`/moderation/reports${params}`)
+  },
+
+  determineAction: (data) => {
+    return request('/moderation/determine-action', {
+      method: 'POST',
+      body: data
+    })
+  },
+
+  deletePostAsModerator: (postId, reason) => {
+    return request(`/moderation/delete-post/${postId}?reason=${encodeURIComponent(reason)}`, {
+      method: 'POST'
+    })
+  },
+
+  deleteAccountAsModerator: (userId, reason) => {
+    return request(`/moderation/delete-account/${userId}?reason=${encodeURIComponent(reason)}`, {
+      method: 'DELETE'
     })
   },
   

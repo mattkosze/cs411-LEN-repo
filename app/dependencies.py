@@ -10,8 +10,8 @@ def get_current_user(db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User is not authenticated")
     return user
 
-def require_moderator(current_user):
-    if current_user not in {models.UserRole.MODERATOR, models.UserRole.ADMIN}:
+def require_moderator(current_user: models.User):
+    if current_user.role not in {models.UserRole.MODERATOR, models.UserRole.ADMIN}:
         from fastapi import HTTPException
         raise HTTPException(status_code=403, detail="Moderator access required")
     return current_user
