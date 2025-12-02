@@ -11,7 +11,8 @@ router = APIRouter()
 @router.get("/", response_model=List[schemas.PostRead])
 def get_posts(
     group_id: Optional[int] = Query(None, description="Filter posts by condition/board group_id"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
 ):
     """Get posts, optionally filtered by group_id (condition board)"""
     query = db.query(models.Post).filter(models.Post.status == models.PostStatus.ACTIVE)

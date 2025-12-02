@@ -52,6 +52,7 @@ class User(Base):
     isanonymous = Column(Boolean, default=True)
     role = Column(Enum(UserRole), default=UserRole.USER)
     isbanned = Column(Boolean, default=False)
+    is_active = Column(Boolean, default=True)
 
     posts = relationship("Post", back_populates="author")
     reports_made = relationship("Report", back_populates="reporting_user", foreign_keys="Report.reported_user_id")

@@ -14,6 +14,8 @@ def get_current_user(
             user_id = int(x_user_id)
             user = db.query(models.User).filter(models.User.id == user_id).first()
             if user:
+                if not user.is_active:
+                    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is deleted")
                 return user
         except ValueError:
             pass
@@ -22,6 +24,10 @@ def get_current_user(
     user = db.query(models.User).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User is not authenticated")
+    
+    if not user.is_active:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is deleted")
+        
     return user
 
 def require_moderator(current_user: models.User):

@@ -9,7 +9,10 @@ from ..dependencies import get_current_user
 router = APIRouter()
 
 @router.get("/", response_model=List[schemas.ConditionBoardRead])
-def get_boards(db: Session = Depends(get_db)):
+def get_boards(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
     return board_service.list_boards(db)
 
 @router.post("/", response_model=schemas.ConditionBoardRead)
