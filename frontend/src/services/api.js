@@ -1,6 +1,5 @@
-// Use environment variable or default to localhost:8000
-// If VITE_API_URL is not set, use direct connection (CORS enabled)
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+// Set to default to localhost:8000
+const API_BASE_URL = 'http://localhost:8000'
 
 async function request(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`
@@ -24,7 +23,7 @@ async function request(endpoint, options = {}) {
       throw new Error(error.detail || `HTTP error! status: ${response.status}`)
     }
 
-    // Handle empty responses
+    //handles empty responses
     const contentType = response.headers.get('content-type')
     if (contentType && contentType.includes('application/json')) {
       return await response.json()
@@ -79,6 +78,14 @@ export const api = {
   // Alert mods if crisis
   crisisEscalation: (data) => {
     return request('/crisis/escalate', {
+      method: 'POST',
+      body: data
+    })
+  },
+
+  // Report a post
+  reportPost: (postId, data) => {
+    return request(`/posts/${postId}/report`, {
       method: 'POST',
       body: data
     })

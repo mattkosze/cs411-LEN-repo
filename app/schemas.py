@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 from datetime import datetime
-from .models import UserRole, PostStatus, ReportStatus, CrisisStatus, ConditionBoard 
+from .models import UserRole, PostStatus, ReportStatus, CrisisStatus, ReportReason, ConditionBoard 
 
 class UserBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -29,8 +29,8 @@ class PostRead(BaseModel):
 class ReportCreate(BaseModel):
     reported_user_id : Optional[int] = None
     post_id : Optional[int] = None
-    reason : str
-    is_crisis : bool = False
+    reason : ReportReason
+    details : Optional[str] = None  # Optional additional details from reporter
 
 class ReportRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -39,7 +39,8 @@ class ReportRead(BaseModel):
     reporting_user_id : int
     reported_user_id : Optional[int]
     post_id : Optional[int]
-    reason : str
+    reason : ReportReason
+    details : Optional[str]
     is_crisis : bool
     status : ReportStatus
     resolutionimpact : Optional[str]

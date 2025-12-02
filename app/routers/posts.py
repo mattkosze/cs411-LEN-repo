@@ -4,7 +4,7 @@ from typing import List, Optional
 from ..db import get_db
 from .. import schemas, models
 from ..dependencies import get_current_user
-from ..services import messaging_service
+from ..services import messaging_service, report_service
 
 router = APIRouter()
 
@@ -44,3 +44,17 @@ def delete_post(
         post_id=post.id,
         status=post.status,
     )
+
+@router.post("/{post_id}/report", response_model=schemas.ReportRead)
+def report_post(
+    post_id: int,
+    data: schemas.ReportCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """
+    Report a post for harassment, spam, inappropriate content, or crisis.
+    Crisis reports automatically create a crisis ticket for urgent handling.
+    """
+    report = report_service.create_report(db, current_user, post_id, data)
+    return report

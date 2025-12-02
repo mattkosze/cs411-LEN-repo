@@ -1,0 +1,252 @@
+.report-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.report-modal {
+  background: var(--card-background);
+  border-radius: 16px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.report-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.report-modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--text-primary);
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.close-button:hover {
+  color: var(--text-primary);
+}
+
+.report-modal-content {
+  padding: 1.5rem;
+}
+
+.report-intro {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.report-error {
+  background: rgba(231, 76, 60, 0.1);
+  border: 1px solid var(--error);
+  color: var(--error);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.reason-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.reason-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.reason-option:hover {
+  border-color: var(--primary-color);
+  background: var(--hover-bg);
+}
+
+.reason-option.selected {
+  border-color: var(--primary-color);
+  background: rgba(74, 144, 226, 0.08);
+}
+
+.reason-option.crisis-option {
+  border-color: var(--warning);
+}
+
+.reason-option.crisis-option:hover {
+  border-color: var(--error);
+  background: rgba(231, 76, 60, 0.05);
+}
+
+.reason-option.crisis-option.selected {
+  border-color: var(--error);
+  background: rgba(231, 76, 60, 0.1);
+}
+
+.reason-option input[type="radio"] {
+  margin-top: 0.25rem;
+  accent-color: var(--primary-color);
+}
+
+.reason-option.crisis-option input[type="radio"] {
+  accent-color: var(--error);
+}
+
+.reason-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.reason-label {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.reason-description {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.crisis-notice {
+  background: rgba(231, 76, 60, 0.1);
+  border: 1px solid var(--error);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.crisis-notice strong {
+  color: var(--error);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.crisis-notice p {
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.details-section {
+  margin-bottom: 1.5rem;
+}
+
+.details-section label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.details-section textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.char-count {
+  display: block;
+  text-align: right;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
+
+.report-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.btn-cancel {
+  background: var(--card-background);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+.btn-cancel:hover:not(:disabled) {
+  background: var(--hover-bg);
+  color: var(--text-primary);
+}
+
+.btn-submit {
+  background: var(--primary-color);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+.btn-submit:hover:not(:disabled) {
+  background: var(--primary-dark);
+}
+
+.btn-submit:disabled {
+  opacity: 0.5;
+}
+
+.btn-submit.btn-crisis {
+  background: var(--error);
+}
+
+.btn-submit.btn-crisis:hover:not(:disabled) {
+  background: #c0392b;
+}
+
+@media (max-width: 480px) {
+  .report-modal {
+    margin: 0.5rem;
+  }
+
+  .report-modal-header,
+  .report-modal-content {
+    padding: 1rem;
+  }
+
+  .report-modal-actions {
+    flex-direction: column;
+  }
+
+  .btn-cancel,
+  .btn-submit {
+    width: 100%;
+  }
+}
+
