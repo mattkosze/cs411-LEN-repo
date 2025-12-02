@@ -22,7 +22,7 @@ async function request(endpoint, options = {}) {
       throw new Error(error.detail || `HTTP error! status: ${response.status}`)
     }
 
-    // Handle empty responses
+    //handles empty responses
     const contentType = response.headers.get('content-type')
     if (contentType && contentType.includes('application/json')) {
       return await response.json()
@@ -30,7 +30,7 @@ async function request(endpoint, options = {}) {
     return null
   } catch (error) {
     console.error('API request failed:', error)
-    // Provide more helpful error messages
+    //provides more helpful error messages
     if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
       throw new Error('Unable to connect to the server. Please make sure the backend is running on http://localhost:8000')
     }
@@ -73,6 +73,14 @@ export const api = {
   // Alert mods if crisis
   crisisEscalation: (data) => {
     return request('/crisis/escalate', {
+      method: 'POST',
+      body: data
+    })
+  },
+
+  // Report a post
+  reportPost: (postId, data) => {
+    return request(`/posts/${postId}/report`, {
       method: 'POST',
       body: data
     })

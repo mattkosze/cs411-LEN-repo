@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { api } from '../services/api'
 import PostForm from '../components/PostForm'
+import ReportModal from '../components/ReportModal'
 import './Board.css'
 
 function Board() {
@@ -14,6 +15,8 @@ function Board() {
   // Track current time to allow relative timestamps to update without refetching
   const [now, setNow] = useState(Date.now())
   const [board, setBoard] = useState(null)
+  const [reportingPost, setReportingPost] = useState(null)
+  const [isReportSubmitting, setIsReportSubmitting] = useState(false)
 
   useEffect(() => {
     loadPosts()
@@ -32,7 +35,7 @@ function Board() {
     }
   }
 
-  // Updates the post timestamp every minute
+  //updates post timestamp every minute
   useEffect(() => {
     const interval = setInterval(() => {
       setNow(Date.now())
@@ -46,7 +49,7 @@ function Board() {
       setCurrentUserId(user?.id || null)
     } catch (err) {
       console.error('Error loading current user:', err)
-      setCurrentUserId(1) // Fallback user ID if it cannot be retrived
+      setCurrentUserId(1) // fallback user ID if it cannot be retrived
     }
   }
 
@@ -67,7 +70,7 @@ function Board() {
   }
 
   const handlePostCreated = () => {
-    // Reload from the database to get the latest posts
+    //reloads from the database to get the latest posts
     loadPosts()
     setShowPostForm(false)
   }
@@ -78,7 +81,7 @@ function Board() {
     }
     try {
       await api.deletePost(postId)
-      // Reload posts to reflect deletion
+      //reloads posts to reflect deletion
       loadPosts()
     } catch (err) {
       console.error('Error deleting post:', err)
@@ -86,8 +89,32 @@ function Board() {
     }
   }
 
-  const formatDate = (date) => {    
-    const diffMs = now - date
+  const handleReportPost = (post) => {
+    setReportingPost(post)
+  }
+
+  const handleReportSubmit = async (reportData) => {
+    setIsReportSubmitting(true)
+    try {
+      await api.reportPost(reportingPost.id, reportData)
+      setReportingPost(null)
+      alert('Thank you for your report. Our moderation team will review it shortly.')
+    } catch (err) {
+      console.error('Error submitting report:', err)
+      throw err
+    } finally {
+      setIsReportSubmitting(false)
+    }
+  }
+
+  const handleReportClose = () => {
+    if (!isReportSubmitting) {
+      setReportingPost(null)
+    }
+  }
+
+  const formatDate = (timestamp) => {    
+    const diffMs = now - timestamp
     const diffMins = Math.floor(diffMs / 60000)
     const diffHours = Math.floor(diffMs / 3600000)
     const diffDays = Math.floor(diffMs / 86400000)
@@ -96,7 +123,8 @@ function Board() {
     if (diffMins < 60) return `${diffMins} ${diffMins === 1 ? 'minute' : 'minutes'} ago`
     if (diffHours < 24) return `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`
     if (diffDays < 7) return `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`
-    return date.toLocaleDateString()
+    //converts timestamp to Date object for older posts
+    return new Date(timestamp).toLocaleDateString()
   }
 
   if (!board) {
@@ -179,20 +207,40 @@ function Board() {
                   Status: <span className={`status-${post.status}`}>{post.status}</span>
                 </div>
               )}
-              {currentUserId && post.author && post.author.id === currentUserId && post.status === 'active' && (
+              {post.status === 'active' && (
                 <div className="post-actions">
-                  <button
-                    className="btn-delete"
-                    onClick={() => handleDeletePost(post.id)}
-                    aria-label="Delete post"
-                  >
-                    Delete
-                  </button>
+                  {currentUserId && post.author && post.author.id !== currentUserId && (
+                    <button
+                      className="btn-report"
+                      onClick={() => handleReportPost(post)}
+                      aria-label="Report post"
+                    >
+                      Report
+                    </button>
+                  )}
+                  {currentUserId && post.author && post.author.id === currentUserId && (
+                    <button
+                      className="btn-delete"
+                      onClick={() => handleDeletePost(post.id)}
+                      aria-label="Delete post"
+                    >
+                      Delete
+                    </button>
+                  )}
                 </div>
               )}
             </article>
           ))}
         </div>
+      )}
+
+      {reportingPost && (
+        <ReportModal
+          post={reportingPost}
+          onClose={handleReportClose}
+          onSubmit={handleReportSubmit}
+          isSubmitting={isReportSubmitting}
+        />
       )}
     </div>
   )
