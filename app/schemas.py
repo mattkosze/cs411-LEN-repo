@@ -85,3 +85,19 @@ class ConditionBoardCreate(BaseModel):
 
 class ConditionBoardRead(ConditionBoardBase):
     pass
+
+class UserRegister(BaseModel):
+    email: str = Field(..., max_length=255)
+    password: str = Field(..., min_length=6)
+    displayname: str = Field(..., max_length=50)
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    user_id: Optional[int] = None

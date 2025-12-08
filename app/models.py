@@ -47,7 +47,7 @@ class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String(255), unique=True, index=True, nullable=True)
-    hashedpassword = Column(String(50), nullable=True)
+    hashedpassword = Column(String(255), nullable=True)  # Increased to accommodate bcrypt hashes (60 chars)
     displayname = Column(String(50))
     isanonymous = Column(Boolean, default=True)
     role = Column(Enum(UserRole), default=UserRole.USER)

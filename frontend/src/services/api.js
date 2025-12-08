@@ -1,19 +1,27 @@
 // Set to default to localhost:8000
 const API_BASE_URL = 'http://localhost:8000'
 
-// Helper to get/set simulated user ID
+// Helper to get/set auth token
+const AUTH_TOKEN_KEY = 'len_auth_token'
+// Helper to get/set simulated user ID (for dev/testing)
 const SIMULATED_USER_KEY = 'len_simulated_user_id'
 
 async function request(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`
   
-  // Add simulated user header if set
-  const simulatedUserId = localStorage.getItem(SIMULATED_USER_KEY)
   const headers = {
     'Content-Type': 'application/json',
     ...options.headers,
   }
   
+  // Add auth token if available
+  const token = localStorage.getItem(AUTH_TOKEN_KEY)
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+  
+  // Add simulated user header if set (for dev/testing, fallback)
+  const simulatedUserId = localStorage.getItem(SIMULATED_USER_KEY)
   if (simulatedUserId) {
     headers['x-user-id'] = simulatedUserId
   }
@@ -31,6 +39,10 @@ async function request(endpoint, options = {}) {
     const response = await fetch(url, config)
     
     if (!response.ok) {
+      // If unauthorized, clear token
+      if (response.status === 401) {
+        localStorage.removeItem(AUTH_TOKEN_KEY)
+      }
       const error = await response.json().catch(() => ({ detail: response.statusText }))
       throw new Error(error.detail || `HTTP error! status: ${response.status}`)
     }
@@ -56,6 +68,40 @@ async function request(endpoint, options = {}) {
 }
 
 export const api = {
+  // Authentication endpoints
+  register: async (email, password, displayname) => {
+    const response = await request('/accounts/register', {
+      method: 'POST',
+      body: { email, password, displayname },
+    })
+    if (response.access_token) {
+      localStorage.setItem(AUTH_TOKEN_KEY, response.access_token)
+    }
+    return response
+  },
+
+  login: async (email, password) => {
+    const response = await request('/accounts/login', {
+      method: 'POST',
+      body: { email, password },
+    })
+    if (response.access_token) {
+      localStorage.setItem(AUTH_TOKEN_KEY, response.access_token)
+    }
+    return response
+  },
+
+  logout: () => {
+    localStorage.removeItem(AUTH_TOKEN_KEY)
+    return request('/accounts/logout', {
+      method: 'POST',
+    })
+  },
+
+  isAuthenticated: () => {
+    return !!localStorage.getItem(AUTH_TOKEN_KEY)
+  },
+
   // Get posts, optionally filtered by group_id
   getPosts: (groupId = null) => {
     const params = groupId !== null ? `?group_id=${groupId}` : ''
