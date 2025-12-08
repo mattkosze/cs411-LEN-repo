@@ -54,3 +54,7 @@ npm run dev
 - The backend will auto-create tables and seed initial boards and a guest user if none exist.
 - For development, both servers must be running simultaneously.
 - For troubleshooting Node.js or Python installation, see `frontend/START_FRONTEND.md`.
+
+### Unit Tests
+
+- To run the python unit tests, use the terminal and run pytest --cov=app --cov-report=term-missing
