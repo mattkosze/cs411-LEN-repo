@@ -1,21 +1,67 @@
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom'
 import { useState, useEffect, useRef } from 'react'
 import Home from './pages/Home'
 import Board from './pages/Board'
 import Account from './pages/Account'
 import Moderation from './pages/Moderation'
 import UserSwitcher from './components/UserSwitcher'
+import Auth from './components/Auth'
 import { api } from './services/api'
 import './App.css'
 
-function App() {
+function AppContent() {
   const [showAccountDropdown, setShowAccountDropdown] = useState(false)
   const [userRole, setUserRole] = useState(null)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const accountMenuRef = useRef(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
-    loadUserRole()
+    checkAuth()
   }, [])
+
+  const checkAuth = async () => {
+    setIsLoading(true)
+    const hasToken = api.isAuthenticated()
+    if (hasToken) {
+      try {
+        const user = await api.getCurrentUser()
+        setUserRole(user?.role || 'user')
+        setIsAuthenticated(true)
+      } catch (err) {
+        // Token invalid, clear it
+        api.logout()
+        setIsAuthenticated(false)
+        setUserRole(null)
+      }
+    } else {
+      setIsAuthenticated(false)
+      setUserRole(null)
+    }
+    setIsLoading(false)
+  }
+
+  const handleAuthSuccess = () => {
+    checkAuth()
+    navigate('/')
+  }
+
+  const handleLogout = async () => {
+    try {
+      await api.logout()
+      setIsAuthenticated(false)
+      setUserRole(null)
+      setShowAccountDropdown(false)
+      navigate('/')
+    } catch (err) {
+      console.error('Error logging out:', err)
+      // Still clear local state even if API call fails
+      setIsAuthenticated(false)
+      setUserRole(null)
+      navigate('/')
+    }
+  }
 
   const loadUserRole = async () => {
     try {
@@ -45,8 +91,18 @@ function App() {
 
   const isModerator = userRole === 'moderator' || userRole === 'admin'
 
-  return (
-    <Router>
+  if (isLoading) {
+    return (
+      <div className="app">
+        <div className="container" style={{ textAlign: 'center', padding: '4rem 0' }}>
+          <p>Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return (
       <div className="app">
         <header className="app-header">
           <div className="container header-container">
@@ -55,45 +111,11 @@ function App() {
                 <Link to="/">Len</Link>
               </h1>
             </div>
-            <div className="header-right">
-              {isModerator && (
-                <Link to="/moderation" className="moderation-link">
-                  Moderation
-                </Link>
-              )}
-              <div className="account-menu" ref={accountMenuRef}>
-                <button 
-                  className="account-button"
-                  onClick={() => setShowAccountDropdown(!showAccountDropdown)}
-                  aria-label="Account menu"
-                >
-                  Account
-                </button>
-                {showAccountDropdown && (
-                  <div className="account-dropdown">
-                    <Link to="/account?tab=profile" onClick={() => setShowAccountDropdown(false)}>
-                      View Profile
-                    </Link>
-                    <Link to="/account?tab=posts" onClick={() => setShowAccountDropdown(false)}>
-                      My Posts
-                    </Link>
-                    <Link to="/account?tab=settings" onClick={() => setShowAccountDropdown(false)}>
-                      Settings
-                    </Link>
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
         </header>
         <main className="app-main">
           <div className="container">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/board/:groupId" element={<Board />} />
-              <Route path="/account" element={<Account />} />
-              <Route path="/moderation" element={<Moderation />} />
-            </Routes>
+            <Auth onAuthSuccess={handleAuthSuccess} />
           </div>
         </main>
         <footer className="app-footer">
@@ -101,8 +123,80 @@ function App() {
             <p>&copy; 2025 len. A safe space for support and connection.</p>
           </div>
         </footer>
-        <UserSwitcher />
       </div>
+    )
+  }
+
+  return (
+    <div className="app">
+      <header className="app-header">
+        <div className="container header-container">
+          <div className="header-left">
+            <h1>
+              <Link to="/">Len</Link>
+            </h1>
+          </div>
+          <div className="header-right">
+            {isModerator && (
+              <Link to="/moderation" className="moderation-link">
+                Moderation
+              </Link>
+            )}
+            <div className="account-menu" ref={accountMenuRef}>
+              <button 
+                className="account-button"
+                onClick={() => setShowAccountDropdown(!showAccountDropdown)}
+                aria-label="Account menu"
+              >
+                Account
+              </button>
+              {showAccountDropdown && (
+                <div className="account-dropdown">
+                  <Link to="/account?tab=profile" onClick={() => setShowAccountDropdown(false)}>
+                    View Profile
+                  </Link>
+                  <Link to="/account?tab=posts" onClick={() => setShowAccountDropdown(false)}>
+                    My Posts
+                  </Link>
+                  <Link to="/account?tab=settings" onClick={() => setShowAccountDropdown(false)}>
+                    Settings
+                  </Link>
+                  <button 
+                    className="account-dropdown-button"
+                    onClick={handleLogout}
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </header>
+      <main className="app-main">
+        <div className="container">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/board/:groupId" element={<Board />} />
+            <Route path="/account" element={<Account />} />
+            <Route path="/moderation" element={<Moderation />} />
+          </Routes>
+        </div>
+      </main>
+      <footer className="app-footer">
+        <div className="container">
+          <p>&copy; 2025 len. A safe space for support and connection.</p>
+        </div>
+      </footer>
+      <UserSwitcher />
+    </div>
+  )
+}
+
+function App() {
+  return (
+    <Router>
+      <AppContent />
     </Router>
   )
 }

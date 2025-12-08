@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import List
@@ -11,6 +11,31 @@ router = APIRouter()
 
 class DeleteAccountRequest(BaseModel):
     reason: str
+
+@router.post("/register", response_model=schemas.Token)
+def register(
+    user_data: schemas.UserRegister,
+    db: Session = Depends(get_db)
+):
+    """Register a new user account"""
+    user = account_service.register_user(db, user_data)
+    access_token = account_service.create_access_token(data={"sub": str(user.id)})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@router.post("/login", response_model=schemas.Token)
+def login(
+    credentials: schemas.UserLogin,
+    db: Session = Depends(get_db)
+):
+    """Sign in with email and password"""
+    user = account_service.authenticate_user(db, credentials.email, credentials.password)
+    access_token = account_service.create_access_token(data={"sub": str(user.id)})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@router.post("/logout")
+def logout():
+    """Sign out (client-side token removal)"""
+    return {"message": "Successfully logged out"}
 
 @router.get("/", response_model=List[schemas.UserBase])
 def get_all_users(db: Session = Depends(get_db)):
