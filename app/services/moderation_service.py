@@ -6,7 +6,7 @@ from .. import models, schemas
 VALID = {"warn", "ban", "dismiss"}
 
 def determine_action(db, moderator, data):
-    #checks if the action reported is valid, and from there applies a given action to user. recorded in audit log
+    # checks if the action reported is valid, and from there applies a given action to user. recorded in audit log
     if data.action not in VALID:
         raise HTTPException(status_code=400, detail="Invalid action")
     
@@ -18,16 +18,16 @@ def determine_action(db, moderator, data):
     if report.is_crisis:
         raise HTTPException(status_code=400, detail="Crisis report being handled independently")
     
-    #applying the action
+    # applying the action
     report.status = models.ReportStatus.RESOLVED
-    report.resolutionimpact = data.action
+    report.resolution_impact = data.action
 
     if report.reported_user_id:
         reported_user = db.query(models.User).get(report.reported_user_id)
 
         if reported_user:
             if data.action == "ban":
-                reported_user.isbanned = True
+                reported_user.is_banned = True
 
     audit = models.AuditLogEntry(actor_id=moderator.id, action_type=f"moderation_{data.action}", target_type="Report", target_id=report.id, details=data.mod_note or "")
     db.add(audit)
@@ -36,8 +36,8 @@ def determine_action(db, moderator, data):
 
     return report
 
-def delete_post(db,moderator,post_id,reason):
-    #audit log records post being deleted, with error-handling
+def delete_post(db, moderator, post_id, reason):
+    # audit log records post being deleted, with error-handling
     post = db.query(models.Post).filter(models.Post.id == post_id).first()
 
     if not post:
@@ -48,7 +48,7 @@ def delete_post(db,moderator,post_id,reason):
     
     post.status = models.PostStatus.DELETED
 
-    audit = models.AuditLogEntry(actor_id=moderator.id, action_type="Post", target_id=post.id, details=reason or "")
+    audit = models.AuditLogEntry(actor_id=moderator.id, action_type="delete_post", target_type="Post", target_id=post.id, details=reason or "")
 
     db.add(audit)
     db.commit()

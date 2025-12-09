@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { api } from '../services/api'
+import { formatDateTime } from '../utils/constants'
 import './Account.css'
 
 function Account() {
@@ -37,11 +38,6 @@ function Account() {
       // On success, set loading to false
       setLoading(false)
     }
-  }
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
   }
 
   if (loading) {
@@ -90,7 +86,7 @@ function Account() {
                 <div className="profile-info">
                   <div className="info-row">
                     <label>Display Name:</label>
-                    <span>{userInfo.isanonymous ? 'Anonymous' : userInfo.displayname}</span>
+                    <span>{userInfo.is_anonymous ? 'Anonymous' : userInfo.display_name}</span>
                   </div>
                   <div className="info-row">
                     <label>User ID:</label>
@@ -109,7 +105,7 @@ function Account() {
                   </div>
                   <div className="info-row">
                     <label>Anonymous Mode:</label>
-                    <span>{userInfo.isanonymous ? 'Yes' : 'No'}</span>
+                    <span>{userInfo.is_anonymous ? 'Yes' : 'No'}</span>
                   </div>
                 </div>
               ) : (
@@ -133,7 +129,7 @@ function Account() {
                   <div key={post.id} className="user-post-card">
                     <div className="post-header">
                       <h3>Post #{post.id}</h3>
-                      <time>{formatDate(post.createdat)}</time>
+                      <time>{formatDateTime(post.created_at)}</time>
                     </div>
                     <div className="post-content-preview">
                       {post.content.substring(0, 150)}
@@ -161,13 +157,13 @@ function Account() {
               <div className="settings-list">
                 <div className="setting-item">
                   <label>Display Name</label>
-                  <input type="text" placeholder="Your display name" defaultValue={userInfo?.displayname || ''} />
+                  <input type="text" placeholder="Your display name" defaultValue={userInfo?.display_name || ''} />
                   <p className="setting-hint">This name will be shown on your posts</p>
                 </div>
                 <div className="setting-item">
                   <label>Anonymous Mode</label>
                   <label className="toggle-switch">
-                    <input type="checkbox" defaultChecked={userInfo?.isanonymous || false} />
+                    <input type="checkbox" defaultChecked={userInfo?.is_anonymous || false} />
                     <span className="toggle-slider"></span>
                   </label>
                   <p className="setting-hint">When enabled, your posts will show as anonymous</p>

@@ -1,43 +1,12 @@
 # app/test/test_routers_endpoints.py
+"""Tests for router endpoints using mocked dependencies."""
 
 from types import SimpleNamespace
 import pytest
 
 from app.routers import accounts, boards, moderation, posts
 from app import models
-
-
-# ---------- Helpers for fake DB/query ----------
-
-class FakeQuery:
-    def __init__(self, result_list=None, first_result=None):
-        self._result_list = result_list or []
-        self._first_result = first_result
-
-    def filter(self, *args, **kwargs):
-        # Just return self; we don't care about the filters for coverage
-        return self
-
-    def order_by(self, *args, **kwargs):
-        # Again, just return self
-        return self
-
-    def all(self):
-        return self._result_list
-
-    def first(self):
-        return self._first_result
-
-
-class FakeDB:
-    """Very small fake DB object that returns a FakeQuery."""
-
-    def __init__(self, result_list=None, first_result=None):
-        self._result_list = result_list or []
-        self._first_result = first_result
-
-    def query(self, *args, **kwargs):
-        return FakeQuery(result_list=self._result_list, first_result=self._first_result)
+from app.test.test_helpers import FakeDB, FakeQuery
 
 
 # ---------- accounts.py tests ----------
@@ -212,7 +181,19 @@ def test_determine_action_calls_service(monkeypatch):
     def fake_require_moderator(user):
         return SimpleNamespace(id=999)
 
-    fake_report = SimpleNamespace(id=10)
+    fake_report = SimpleNamespace(
+        id=10,
+        reporting_user_id=1,
+        reported_user_id=2,
+        post_id=3,
+        reason=models.ReportReason.SPAM,
+        details="test details",
+        is_crisis=False,
+        status=models.ReportStatus.RESOLVED,
+        resolution_impact="dismissed",
+        created_at=1234567890.0,
+        resolved_at=1234567891.0
+    )
 
     def fake_determine_action(db, moderator, data):
         assert db is fake_db
@@ -223,13 +204,13 @@ def test_determine_action_calls_service(monkeypatch):
 
     data = SimpleNamespace()
     result = moderation.determine_action(data=data, db=fake_db, current_user=current_user)
-    assert result.report is fake_report
+    assert result.report.id == 10
 
 
 def test_moderation_delete_post_calls_service(monkeypatch):
     fake_db = FakeDB()
     current_user = SimpleNamespace(id=1)
-    fake_post = SimpleNamespace(id=7, status="DELETED")
+    fake_post = SimpleNamespace(id=7, status=models.PostStatus.DELETED)
 
     def fake_require_moderator(user):
         return SimpleNamespace(id=999)
@@ -250,7 +231,7 @@ def test_moderation_delete_post_calls_service(monkeypatch):
     )
     assert result.success is True
     assert result.post_id == 7
-    assert result.status == fake_post.status
+    assert result.status == models.PostStatus.DELETED
 
 
 def test_moderation_delete_account_user_found(monkeypatch):
@@ -341,7 +322,7 @@ def test_post_message_calls_service(monkeypatch):
 def test_posts_delete_post_calls_service(monkeypatch):
     fake_db = FakeDB()
     current_user = SimpleNamespace(id=1)
-    fake_post = SimpleNamespace(id=5, status="DELETED")
+    fake_post = SimpleNamespace(id=5, status=models.PostStatus.DELETED)
 
     def fake_delete_post(db, user, post_id):
         assert post_id == 5
@@ -352,7 +333,7 @@ def test_posts_delete_post_calls_service(monkeypatch):
     result = posts.delete_post(post_id=5, db=fake_db, current_user=current_user)
     assert result.success is True
     assert result.post_id == 5
-    assert result.status == "DELETED"
+    assert result.status == models.PostStatus.DELETED
 
 
 def test_report_post_calls_service(monkeypatch):

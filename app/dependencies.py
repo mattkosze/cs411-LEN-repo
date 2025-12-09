@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException, status, Header
+from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -8,6 +8,7 @@ from . import models
 from .config import settings
 
 security = HTTPBearer(auto_error=False)
+
 
 def get_current_user(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
@@ -45,8 +46,8 @@ def get_current_user(
     
     return user
 
+
 def require_moderator(current_user: models.User):
     if current_user.role not in {models.UserRole.MODERATOR, models.UserRole.ADMIN}:
-        from fastapi import HTTPException
         raise HTTPException(status_code=403, detail="Moderator access required")
     return current_user

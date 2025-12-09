@@ -1,5 +1,5 @@
-// Set to default to localhost:8000
-const API_BASE_URL = 'http://localhost:8000'
+// API base URL - uses environment variable if available, defaults to localhost
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 // Helper to get/set auth token
 const AUTH_TOKEN_KEY = 'len_auth_token'
@@ -60,6 +60,19 @@ async function request(endpoint, options = {}) {
 }
 
 export const api = {
+  // Simulated user for development (stores user ID for switching)
+  getSimulatedUser: () => {
+    return localStorage.getItem('len_simulated_user_id')
+  },
+
+  setSimulatedUser: (userId) => {
+    localStorage.setItem('len_simulated_user_id', userId.toString())
+  },
+
+  clearSimulatedUser: () => {
+    localStorage.removeItem('len_simulated_user_id')
+  },
+
   // Authentication endpoints
   register: async (email, password, displayname) => {
     const response = await request('/accounts/register', {
@@ -168,6 +181,14 @@ export const api = {
   deleteAccountAsModerator: (userId, reason) => {
     return request(`/moderation/delete-account/${userId}?reason=${encodeURIComponent(reason)}`, {
       method: 'DELETE'
+    })
+  },
+
+  // Delete own account
+  deleteAccount: (reason) => {
+    return request('/accounts/me/', {
+      method: 'DELETE',
+      body: { reason }
     })
   },
   

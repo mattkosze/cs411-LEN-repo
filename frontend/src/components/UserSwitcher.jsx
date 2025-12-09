@@ -51,7 +51,7 @@ function UserSwitcher() {
           {currentUser?.role || 'user'}
         </span>
         <span className="user-name">
-          {currentUser?.displayname || 'Guest'}
+          {currentUser?.display_name || 'Guest'}
         </span>
         <span className="arrow">▼</span>
       </button>
@@ -67,7 +67,7 @@ function UserSwitcher() {
                 onClick={() => handleUserSelect(user)}
               >
                 <div className="user-info">
-                  <span className="name">{user.displayname}</span>
+                  <span className="name">{user.display_name}</span>
                   <span className="email">{user.email}</span>
                 </div>
                 <span className="role-badge" data-role={user.role}>

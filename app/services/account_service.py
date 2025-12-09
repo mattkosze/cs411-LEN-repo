@@ -42,12 +42,18 @@ def register_user(db: Session, user_data: schemas.UserRegister) -> models.User:
     # Create new user
     new_user = models.User(
         email=user_data.email,
-        hashedpassword=hashed_password,
-        displayname=user_data.displayname,
-        isanonymous=False,
+        hashed_password=hashed_password,
+        display_name=user_data.display_name,
+        is_anonymous=False,
         role=models.UserRole.USER,
         is_active=True
     )
+    
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    
+    return new_user
     
     db.add(new_user)
     db.commit()
@@ -70,7 +76,7 @@ def authenticate_user(db: Session, email: str, password: str) -> models.User:
             detail="Account is deleted"
         )
     
-    if not verify_password(password, user.hashedpassword):
+    if not verify_password(password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password"
@@ -79,16 +85,16 @@ def authenticate_user(db: Session, email: str, password: str) -> models.User:
     return user
 
 def delete_account(db, user, reason):
-    user.displayname = "Deleted User"
+    user.display_name = "Deleted User"
     user.email = None
-    user.hashedpassword = None
-    user.isanonymous = True
+    user.hashed_password = None
+    user.is_anonymous = True
     user.is_active = False
 
     db.add(user)
 
-    audit = models.AuditLogEntry(actor_id=user.id,action_type="delete_account",target_type="User",target_id=user.id, details=reason or "")
+    audit = models.AuditLogEntry(actor_id=user.id, action_type="delete_account", target_type="User", target_id=user.id, details=reason or "")
     db.add(audit)
     db.commit()
 
-    return schemas.DeleteAccountResult(success=True,message="Account deleted and content anonymized")
+    return schemas.DeleteAccountResult(success=True, message="Account deleted and content anonymized")

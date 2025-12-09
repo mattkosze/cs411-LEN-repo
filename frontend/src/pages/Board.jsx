@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { api } from '../services/api'
+import { formatRelativeDate } from '../utils/constants'
 import PostForm from '../components/PostForm'
 import ReportModal from '../components/ReportModal'
 import './Board.css'
@@ -65,8 +66,8 @@ function Board() {
     setError(null)
     try {
       const data = await api.getPosts(parseInt(groupId))
-      // Sort by created date, newest first (createdat is already a timestamp)
-      const sorted = (data || []).sort((a, b) => (b.createdat || 0) - (a.createdat || 0))
+      // Sort by created date, newest first (created_at is already a timestamp)
+      const sorted = (data || []).sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
       setPosts(sorted)
     } catch (err) {
       console.error('Error loading posts:', err)
@@ -140,22 +141,6 @@ function Board() {
     }
   }
 
-  const formatDate = (timestamp) => {
-    // Handle both timestamp (number) and Date object
-    const date = typeof timestamp === 'number' ? new Date(timestamp) : timestamp
-    const diffMs = now - date.getTime()
-    const diffMins = Math.floor(diffMs / 60000)
-    const diffHours = Math.floor(diffMs / 3600000)
-    const diffDays = Math.floor(diffMs / 86400000)
-
-    if (diffMins < 1) return 'just now'
-    if (diffMins < 60) return `${diffMins} ${diffMins === 1 ? 'minute' : 'minutes'} ago`
-    if (diffHours < 24) return `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`
-    if (diffDays < 7) return `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`
-    //converts timestamp to Date object for older posts
-    return new Date(timestamp).toLocaleDateString()
-  }
-
   // Show loading state while board is being loaded
   if (boardLoading) {
     return (
@@ -226,11 +211,11 @@ function Board() {
               <div className="post-header">
                 <div className="post-author">
                   <span className="author-name">
-                    {post.author.isanonymous ? 'Anonymous' : post.author.displayname}
+                    {post.author.is_anonymous ? 'Anonymous' : post.author.display_name}
                   </span>
                 </div>
-                <time className="post-time" dateTime={post.createdat}>
-                  {formatDate(post.createdat)}
+                <time className="post-time" dateTime={post.created_at}>
+                  {formatRelativeDate(post.created_at, now)}
                 </time>
               </div>
               <div className="post-content">

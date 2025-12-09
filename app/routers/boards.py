@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
-from ..db import get_db, SessionLocal
+from ..db import get_db
 from .. import schemas, models
 from ..services import board_service
 from ..dependencies import get_current_user
@@ -23,6 +23,5 @@ def create_board(
 ):
     # Only moderators/admins can create boards
     if current_user.role not in (models.UserRole.MODERATOR, models.UserRole.ADMIN):
-        from fastapi import HTTPException, status
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to create boards")
     return board_service.create_board(db, data)

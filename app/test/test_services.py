@@ -1,3 +1,4 @@
+"""Tests for service layer functions."""
 import datetime
 from types import SimpleNamespace
 
@@ -13,56 +14,7 @@ from app.services import (
     moderation_service,
     report_service,
 )
-
-
-# ---------- Simple in-memory "DB" ----------
-
-class FakeQuery:
-    def __init__(self, data_list):
-        self.data_list = data_list
-
-    def filter(self, *args, **kwargs):
-        # Ignore filters; tests control which objects are present
-        return self
-
-    def order_by(self, *args, **kwargs):
-        return self
-
-    def all(self):
-        return list(self.data_list)
-
-    def first(self):
-        return self.data_list[0] if self.data_list else None
-
-    def count(self):
-        return len(self.data_list)
-
-    def get(self, obj_id):
-        for obj in self.data_list:
-            if getattr(obj, "id", None) == obj_id:
-                return obj
-        return None
-
-
-class FakeSession:
-    def __init__(self, data=None):
-        # data maps model class -> list[instances]
-        self.data = data or {}
-        self.committed = False
-
-    def query(self, model):
-        lst = self.data.setdefault(model, [])
-        return FakeQuery(lst)
-
-    def add(self, obj):
-        self.data.setdefault(obj.__class__, []).append(obj)
-
-    def commit(self):
-        self.committed = True
-
-    def refresh(self, obj):
-        # nothing needed for tests
-        pass
+from app.test.test_helpers import FakeQuery, FakeSession
 
 
 # ---------- account_service tests ----------
@@ -83,14 +35,14 @@ def test_register_user_success_creates_user():
     user_data = SimpleNamespace(
         email="new@example.com",
         password="pw123",
-        displayname="New User",
+        display_name="New User",
     )
 
     user = account_service.register_user(db, user_data)
 
     assert user.email == "new@example.com"
-    assert user.displayname == "New User"
-    assert user.isanonymous is False
+    assert user.display_name == "New User"
+    assert user.is_anonymous is False
     assert user.is_active is True
     # user got added to "db"
     assert db.data[models.User][0] is user
@@ -103,7 +55,7 @@ def test_register_user_existing_email_raises():
     user_data = SimpleNamespace(
         email="taken@example.com",
         password="pw",
-        displayname="Dup",
+        display_name="Dup",
     )
 
     with pytest.raises(HTTPException) as exc:
@@ -122,7 +74,7 @@ def test_authenticate_user_inactive_raises():
     user = models.User()
     user.email = "inactive@example.com"
     user.is_active = False
-    user.hashedpassword = account_service.hash_password("pw")
+    user.hashed_password = account_service.hash_password("pw")
 
     db = FakeSession({models.User: [user]})
 
@@ -135,7 +87,7 @@ def test_authenticate_user_bad_password_raises():
     user = models.User()
     user.email = "user@example.com"
     user.is_active = True
-    user.hashedpassword = account_service.hash_password("correctpw")
+    user.hashed_password = account_service.hash_password("correctpw")
 
     db = FakeSession({models.User: [user]})
 
@@ -148,7 +100,7 @@ def test_authenticate_user_success():
     user = models.User()
     user.email = "user@example.com"
     user.is_active = True
-    user.hashedpassword = account_service.hash_password("correctpw")
+    user.hashed_password = account_service.hash_password("correctpw")
 
     db = FakeSession({models.User: [user]})
 
@@ -165,10 +117,10 @@ def test_create_access_token_returns_string():
 def test_delete_account_marks_user_deleted_and_logs():
     user = models.User()
     user.id = 1
-    user.displayname = "Active"
+    user.display_name = "Active"
     user.email = "user@example.com"
-    user.hashedpassword = account_service.hash_password("pw")
-    user.isanonymous = False
+    user.hashed_password = account_service.hash_password("pw")
+    user.is_anonymous = False
     user.is_active = True
 
     db = FakeSession({models.User: [user], models.AuditLogEntry: []})
@@ -176,10 +128,10 @@ def test_delete_account_marks_user_deleted_and_logs():
     result = account_service.delete_account(db, user, "no longer needed")
 
     assert result.success is True
-    assert user.displayname == "Deleted User"
+    assert user.display_name == "Deleted User"
     assert user.email is None
-    assert user.hashedpassword is None
-    assert user.isanonymous is True
+    assert user.hashed_password is None
+    assert user.is_anonymous is True
     assert user.is_active is False
     # audit log created
     assert len(db.data[models.AuditLogEntry]) == 1
@@ -256,7 +208,7 @@ def test_escalate_crisis_creates_ticket_and_audit():
 
 def test_post_message_banned_user_raises():
     db = FakeSession()
-    author = SimpleNamespace(id=1, isbanned=True)
+    author = SimpleNamespace(id=1, is_banned=True)
     data = SimpleNamespace(group_id=1, content="hi", posttime=datetime.datetime.utcnow())
 
     with pytest.raises(HTTPException) as exc:
@@ -266,7 +218,7 @@ def test_post_message_banned_user_raises():
 
 def test_post_message_creates_post():
     db = FakeSession({models.Post: []})
-    author = SimpleNamespace(id=1, isbanned=False)
+    author = SimpleNamespace(id=1, is_banned=False)
     now = datetime.datetime.utcnow()
     data = SimpleNamespace(group_id=2, content="hello", posttime=now)
 
@@ -368,12 +320,12 @@ def test_determine_action_ban_resolves_report_and_bans_user():
     report.id = 1
     report.is_crisis = False
     report.status = models.ReportStatus.OPEN
-    report.resolutionimpact = None
+    report.resolution_impact = None
     report.reported_user_id = 10
 
     user = models.User()
     user.id = 10
-    user.isbanned = False
+    user.is_banned = False
 
     db = FakeSession({
         models.Report: [report],
@@ -388,8 +340,8 @@ def test_determine_action_ban_resolves_report_and_bans_user():
 
     assert result is report
     assert report.status == models.ReportStatus.RESOLVED
-    assert report.resolutionimpact == "ban"
-    assert user.isbanned is True
+    assert report.resolution_impact == "ban"
+    assert user.is_banned is True
     assert len(db.data[models.AuditLogEntry]) == 1
 
 

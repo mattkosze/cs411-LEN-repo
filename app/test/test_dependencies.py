@@ -30,7 +30,7 @@ class TestGetCurrentUser:
         mock_credentials = MagicMock()
         mock_credentials.credentials = token
         
-        result = get_current_user(credentials=mock_credentials, db=mock_db, x_user_id=None)
+        result = get_current_user(credentials=mock_credentials, db=mock_db)
         
         assert result == mock_user
     
@@ -39,7 +39,7 @@ class TestGetCurrentUser:
         mock_db = MagicMock()
         
         with pytest.raises(HTTPException) as exc_info:
-            get_current_user(credentials=None, db=mock_db, x_user_id=None)
+            get_current_user(credentials=None, db=mock_db)
         
         assert exc_info.value.status_code == 401
         assert "Not authenticated" in exc_info.value.detail
@@ -51,7 +51,7 @@ class TestGetCurrentUser:
         mock_credentials.credentials = "invalid-token"
         
         with pytest.raises(HTTPException) as exc_info:
-            get_current_user(credentials=mock_credentials, db=mock_db, x_user_id=None)
+            get_current_user(credentials=mock_credentials, db=mock_db)
         
         assert exc_info.value.status_code == 401
     
@@ -65,7 +65,7 @@ class TestGetCurrentUser:
         mock_credentials.credentials = token
         
         with pytest.raises(HTTPException) as exc_info:
-            get_current_user(credentials=mock_credentials, db=mock_db, x_user_id=None)
+            get_current_user(credentials=mock_credentials, db=mock_db)
         
         assert exc_info.value.status_code == 401
     
@@ -79,7 +79,7 @@ class TestGetCurrentUser:
         mock_credentials.credentials = token
         
         with pytest.raises(HTTPException) as exc_info:
-            get_current_user(credentials=mock_credentials, db=mock_db, x_user_id=None)
+            get_current_user(credentials=mock_credentials, db=mock_db)
         
         assert exc_info.value.status_code == 401
     
@@ -97,43 +97,10 @@ class TestGetCurrentUser:
         mock_credentials.credentials = token
         
         with pytest.raises(HTTPException) as exc_info:
-            get_current_user(credentials=mock_credentials, db=mock_db, x_user_id=None)
+            get_current_user(credentials=mock_credentials, db=mock_db)
         
         assert exc_info.value.status_code == 403
         assert "deleted" in exc_info.value.detail.lower()
-    
-    @patch('app.dependencies.settings')
-    def test_x_user_id_allowed_in_development(self, mock_settings):
-        """Test that X-User-Id header works in development mode."""
-        mock_settings.ENV = "development"
-        mock_settings.SECRET_KEY = settings.SECRET_KEY
-        mock_settings.ALGORITHM = settings.ALGORITHM
-        
-        mock_user = MagicMock()
-        mock_user.id = 5
-        mock_user.is_active = True
-        
-        mock_db = MagicMock()
-        mock_db.query.return_value.filter.return_value.first.return_value = mock_user
-        
-        result = get_current_user(credentials=None, db=mock_db, x_user_id="5")
-        
-        assert result == mock_user
-    
-    @patch('app.dependencies.settings')
-    def test_x_user_id_ignored_in_production(self, mock_settings):
-        """Test that X-User-Id header is ignored in production mode."""
-        mock_settings.ENV = "production"
-        mock_settings.SECRET_KEY = settings.SECRET_KEY
-        mock_settings.ALGORITHM = settings.ALGORITHM
-        
-        mock_db = MagicMock()
-        
-        # Should raise 401 because X-User-Id is ignored and no JWT provided
-        with pytest.raises(HTTPException) as exc_info:
-            get_current_user(credentials=None, db=mock_db, x_user_id="5")
-        
-        assert exc_info.value.status_code == 401
 
 
 class TestRequireModerator:

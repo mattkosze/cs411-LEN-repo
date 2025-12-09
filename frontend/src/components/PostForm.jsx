@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { api } from "../services/api" 
+import { detectCrisis } from '../utils/constants'
 import './PostForm.css'
 
 function PostForm({ groupId, onPostCreated, onCancel }) {
@@ -16,11 +17,8 @@ function PostForm({ groupId, onPostCreated, onCancel }) {
       return
     }
 
-    // Check for crisis keywords (case insensitive)
-    // Expand this in the future to have more comprehensive checking
-    const crisisKeywords = ['end it all', 'ending it', 'kill myself', 'going through it', 'feeling down', 'not feeling good', 'suicide', 'suicidal', 'want to die', 'harm myself']
-    const contentLower = content.toLowerCase()
-    const isCrisis = crisisKeywords.some(keyword => contentLower.includes(keyword))
+    // Check for crisis keywords using centralized utility
+    const isCrisis = detectCrisis(content)
     
     if (isCrisis) {
       alert('Crisis detected. Moderators have been alerted and support resources are being prepared.')

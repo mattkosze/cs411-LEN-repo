@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../services/api'
+import { formatDateTime } from '../utils/constants'
 import './Moderation.css'
 
 function Moderation() {
@@ -111,11 +112,6 @@ function Moderation() {
     }
   }
 
-  const formatDate = (timestamp) => {
-    const date = new Date(timestamp * 1000)
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
-  }
-
   const openDeletePostModal = (postId) => {
     setTargetPostId(postId)
     setShowDeletePostModal(true)
@@ -195,7 +191,7 @@ function Moderation() {
                   )}
                 </div>
                 <time className="report-time">
-                  {formatDate(report.createdat)}
+                  {formatDateTime(report.created_at)}
                 </time>
               </div>
 
@@ -286,9 +282,9 @@ function Moderation() {
                   </div>
                 )}
 
-                {report.resolutionimpact && (
+                {report.resolution_impact && (
                   <div className="report-resolution">
-                    <strong>Resolution:</strong> {report.resolutionimpact}
+                    <strong>Resolution:</strong> {report.resolution_impact}
                   </div>
                 )}
               </div>

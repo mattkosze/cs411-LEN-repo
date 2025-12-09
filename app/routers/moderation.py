@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from ..db import get_db
@@ -6,7 +6,7 @@ from .. import schemas, models
 from ..dependencies import get_current_user, require_moderator
 from ..services import moderation_service, account_service
 
-#router specifically for general moderation
+# router specifically for general moderation
 
 router = APIRouter()
 
@@ -28,7 +28,7 @@ def get_reports(
         except ValueError:
             pass
     
-    reports = query.order_by(models.Report.createdat.desc()).all()
+    reports = query.order_by(models.Report.created_at.desc()).all()
     return reports
 
 @router.post("/determine-action", response_model=schemas.DetermineActionResult)
@@ -70,7 +70,6 @@ def delete_account(
     
     user_to_delete = db.query(models.User).filter(models.User.id == user_id).first()
     if not user_to_delete:
-        from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="User not found")
     
     return account_service.delete_account(db, user_to_delete, reason)
