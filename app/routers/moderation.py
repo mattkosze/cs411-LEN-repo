@@ -46,12 +46,13 @@ def determine_action(
 def delete_post(
     post_id: int,
     reason: str = Query(..., description="Reason for deletion"),
+    report_id: Optional[int] = Query(None, description="Report ID to resolve"),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
     """Delete a post. Only accessible by moderators."""
     moderator = require_moderator(current_user)
-    post = moderation_service.delete_post(db, moderator, post_id, reason)
+    post = moderation_service.delete_post(db, moderator, post_id, reason, report_id)
     return schemas.DeletePostResult(
         success=True,
         post_id=post.id,
@@ -62,6 +63,7 @@ def delete_post(
 def delete_account(
     user_id: int,
     reason: str = Query(..., description="Reason for account deletion"),
+    report_id: Optional[int] = Query(None, description="Report ID to resolve"),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
@@ -71,5 +73,20 @@ def delete_account(
     user_to_delete = db.query(models.User).filter(models.User.id == user_id).first()
     if not user_to_delete:
         raise HTTPException(status_code=404, detail="User not found")
+    
+    # Resolve the report if report_id is provided
+    if report_id:
+        report = db.query(models.Report).filter(models.Report.id == report_id).first()
+        if report and report.status == models.ReportStatus.OPEN:
+            report.status = models.ReportStatus.RESOLVED
+            report.resolution_impact = "account_deleted"
+            audit = models.AuditLogEntry(
+                actor_id=moderator.id,
+                action_type="moderation_delete_account",
+                target_type="Report",
+                target_id=report.id,
+                details=reason or ""
+            )
+            db.add(audit)
     
     return account_service.delete_account(db, user_to_delete, reason)

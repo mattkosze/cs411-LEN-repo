@@ -172,14 +172,22 @@ export const api = {
     })
   },
 
-  deletePostAsModerator: (postId, reason) => {
-    return request(`/moderation/delete-post/${postId}?reason=${encodeURIComponent(reason)}`, {
+  deletePostAsModerator: (postId, reason, reportId = null) => {
+    let url = `/moderation/delete-post/${postId}?reason=${encodeURIComponent(reason)}`
+    if (reportId) {
+      url += `&report_id=${reportId}`
+    }
+    return request(url, {
       method: 'POST'
     })
   },
 
-  deleteAccountAsModerator: (userId, reason) => {
-    return request(`/moderation/delete-account/${userId}?reason=${encodeURIComponent(reason)}`, {
+  deleteAccountAsModerator: (userId, reason, reportId = null) => {
+    let url = `/moderation/delete-account/${userId}?reason=${encodeURIComponent(reason)}`
+    if (reportId) {
+      url += `&report_id=${reportId}`
+    }
+    return request(url, {
       method: 'DELETE'
     })
   },

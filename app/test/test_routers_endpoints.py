@@ -215,7 +215,7 @@ def test_moderation_delete_post_calls_service(monkeypatch):
     def fake_require_moderator(user):
         return SimpleNamespace(id=999)
 
-    def fake_delete_post(db, moderator, post_id, reason):
+    def fake_delete_post(db, moderator, post_id, reason, report_id=None):
         assert post_id == 7
         assert reason == "spam"
         return fake_post
@@ -226,6 +226,7 @@ def test_moderation_delete_post_calls_service(monkeypatch):
     result = moderation.delete_post(
         post_id=7,
         reason="spam",
+        report_id=None,
         db=fake_db,
         current_user=current_user,
     )
@@ -253,6 +254,7 @@ def test_moderation_delete_account_user_found(monkeypatch):
     result = moderation.delete_account(
         user_id=5,
         reason="violation",
+        report_id=None,
         db=fake_db,
         current_user=current_user,
     )

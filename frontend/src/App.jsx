@@ -109,7 +109,9 @@ function AppContent() {
           <div className="container header-container">
             <div className="header-left">
               <h1>
-                <Link to="/">Len</Link>
+                <Link to="/" className="logo-link">
+                  <img src={logo} alt="Len Logo" className="app-logo" />
+                </Link>
               </h1>
             </div>
           </div>

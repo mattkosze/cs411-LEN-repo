@@ -18,8 +18,11 @@ def determine_action(db, moderator, data):
     if report.is_crisis:
         raise HTTPException(status_code=400, detail="Crisis report being handled independently")
     
-    # applying the action
-    report.status = models.ReportStatus.RESOLVED
+    # applying the action - dismiss goes to DISMISSED, others go to RESOLVED
+    if data.action == "dismiss":
+        report.status = models.ReportStatus.DISMISSED
+    else:
+        report.status = models.ReportStatus.RESOLVED
     report.resolution_impact = data.action
 
     if report.reported_user_id:
@@ -36,7 +39,7 @@ def determine_action(db, moderator, data):
 
     return report
 
-def delete_post(db, moderator, post_id, reason):
+def delete_post(db, moderator, post_id, reason, report_id=None):
     # audit log records post being deleted, with error-handling
     post = db.query(models.Post).filter(models.Post.id == post_id).first()
 
@@ -51,6 +54,14 @@ def delete_post(db, moderator, post_id, reason):
     audit = models.AuditLogEntry(actor_id=moderator.id, action_type="delete_post", target_type="Post", target_id=post.id, details=reason or "")
 
     db.add(audit)
+    
+    # Resolve the report if report_id is provided
+    if report_id:
+        report = db.query(models.Report).filter(models.Report.id == report_id).first()
+        if report and report.status == models.ReportStatus.OPEN:
+            report.status = models.ReportStatus.RESOLVED
+            report.resolution_impact = "post_deleted"
+    
     db.commit()
     db.refresh(post)
 

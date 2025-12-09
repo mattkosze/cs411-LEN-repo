@@ -18,6 +18,7 @@ function Moderation() {
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false)
   const [targetPostId, setTargetPostId] = useState(null)
   const [targetAccountId, setTargetAccountId] = useState(null)
+  const [targetReportId, setTargetReportId] = useState(null)
 
   useEffect(() => {
     loadReports()
@@ -77,10 +78,11 @@ function Moderation() {
     }
 
     try {
-      await api.deletePostAsModerator(targetPostId, deletePostReason)
+      await api.deletePostAsModerator(targetPostId, deletePostReason, targetReportId)
       setDeletePostReason('')
       setShowDeletePostModal(false)
       setTargetPostId(null)
+      setTargetReportId(null)
       loadReports()
       alert('Post deleted successfully')
     } catch (err) {
@@ -100,10 +102,11 @@ function Moderation() {
     }
 
     try {
-      await api.deleteAccountAsModerator(targetAccountId, deleteAccountReason)
+      await api.deleteAccountAsModerator(targetAccountId, deleteAccountReason, targetReportId)
       setDeleteAccountReason('')
       setShowDeleteAccountModal(false)
       setTargetAccountId(null)
+      setTargetReportId(null)
       loadReports()
       alert('Account deleted successfully')
     } catch (err) {
@@ -112,13 +115,15 @@ function Moderation() {
     }
   }
 
-  const openDeletePostModal = (postId) => {
+  const openDeletePostModal = (postId, reportId) => {
     setTargetPostId(postId)
+    setTargetReportId(reportId)
     setShowDeletePostModal(true)
   }
 
-  const openDeleteAccountModal = (userId) => {
+  const openDeleteAccountModal = (userId, reportId) => {
     setTargetAccountId(userId)
+    setTargetReportId(reportId)
     setShowDeleteAccountModal(true)
   }
 
@@ -208,7 +213,7 @@ function Moderation() {
                       <span>Post ID: {report.post_id}</span>
                       <button
                         className="btn-danger btn-small"
-                        onClick={() => openDeletePostModal(report.post_id)}
+                        onClick={() => openDeletePostModal(report.post_id, report.id)}
                       >
                         Delete Post
                       </button>
@@ -223,7 +228,7 @@ function Moderation() {
                       <span>User ID: {report.reported_user_id}</span>
                       <button
                         className="btn-danger btn-small"
-                        onClick={() => openDeleteAccountModal(report.reported_user_id)}
+                        onClick={() => openDeleteAccountModal(report.reported_user_id, report.id)}
                       >
                         Delete Account
                       </button>
@@ -316,6 +321,7 @@ function Moderation() {
                   setShowDeletePostModal(false)
                   setDeletePostReason('')
                   setTargetPostId(null)
+                  setTargetReportId(null)
                 }}
               >
                 Cancel
@@ -348,6 +354,7 @@ function Moderation() {
                   setShowDeleteAccountModal(false)
                   setDeleteAccountReason('')
                   setTargetAccountId(null)
+                  setTargetReportId(null)
                 }}
               >
                 Cancel

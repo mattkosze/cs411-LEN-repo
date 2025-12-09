@@ -177,19 +177,44 @@
   margin-top: 1rem;
 }
 
+/* Consistent action button base styles */
+.report-actions > button {
+  padding: 0.5rem 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 80px;
+  text-align: center;
+}
+
 .btn-warn {
   background: #ffc107;
   color: #000;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background 0.2s;
 }
 
 .btn-warn:hover {
   background: #e0a800;
+}
+
+.report-actions .btn-danger {
+  background: #dc3545;
+  color: white;
+}
+
+.report-actions .btn-danger:hover {
+  background: #c82333;
+}
+
+.report-actions .btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.report-actions .btn-secondary:hover {
+  background: #5a6268;
 }
 
 .action-reason-input {
