@@ -77,7 +77,7 @@ function Home() {
   return (
     <div className="home">
       <div className="home-intro">
-        <h2>Welcome to len</h2>
+        <h2>Welcome to LEN!</h2>
       </div>
 
       <div className="search-container">

@@ -7,9 +7,11 @@ import Moderation from './pages/Moderation'
 import Auth from './components/Auth'
 import { api } from './services/api'
 import './App.css'
+import logo from './assets/logo.svg'
 
 function AppContent() {
   const [showAccountDropdown, setShowAccountDropdown] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [userRole, setUserRole] = useState(null)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -132,12 +134,28 @@ function AppContent() {
         <div className="container header-container">
           <div className="header-left">
             <h1>
-              <Link to="/">Len</Link>
+              <Link to="/" className="logo-link">
+                <img src={logo} alt="Len Logo" className="app-logo" />
+              </Link>
             </h1>
           </div>
-          <div className="header-right">
+          <button 
+            className="mobile-menu-toggle"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            <span className="bar"></span>
+            <span className="bar"></span>
+            <span className="bar"></span>
+          </button>
+
+          <div className={`header-right ${mobileMenuOpen ? 'active' : ''}`}>
             {isModerator && (
-              <Link to="/moderation" className="moderation-link">
+              <Link 
+                to="/moderation" 
+                className="moderation-link"
+                onClick={() => setMobileMenuOpen(false)}
+              >
                 Moderation
               </Link>
             )}
@@ -151,13 +169,31 @@ function AppContent() {
               </button>
               {showAccountDropdown && (
                 <div className="account-dropdown">
-                  <Link to="/account?tab=profile" onClick={() => setShowAccountDropdown(false)}>
+                  <Link 
+                    to="/account?tab=profile" 
+                    onClick={() => {
+                      setShowAccountDropdown(false)
+                      setMobileMenuOpen(false)
+                    }}
+                  >
                     View Profile
                   </Link>
-                  <Link to="/account?tab=posts" onClick={() => setShowAccountDropdown(false)}>
+                  <Link 
+                    to="/account?tab=posts" 
+                    onClick={() => {
+                      setShowAccountDropdown(false)
+                      setMobileMenuOpen(false)
+                    }}
+                  >
                     My Posts
                   </Link>
-                  <Link to="/account?tab=settings" onClick={() => setShowAccountDropdown(false)}>
+                  <Link 
+                    to="/account?tab=settings" 
+                    onClick={() => {
+                      setShowAccountDropdown(false)
+                      setMobileMenuOpen(false)
+                    }}
+                  >
                     Settings
                   </Link>
                   <button 
