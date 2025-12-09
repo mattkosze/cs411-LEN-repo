@@ -15,8 +15,9 @@ def determine_action(db, moderator, data):
     if not report:
         raise HTTPException(status_code=404, detail="Can't find report")
     
-    if report.is_crisis:
-        raise HTTPException(status_code=400, detail="Crisis report being handled independently")
+    # Crisis reports can only be warned or dismissed, not banned
+    if report.is_crisis and data.action == "ban":
+        raise HTTPException(status_code=400, detail="Cannot ban on crisis reports - use warn or dismiss")
     
     # applying the action - dismiss goes to DISMISSED, others go to RESOLVED
     if data.action == "dismiss":

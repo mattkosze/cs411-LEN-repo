@@ -225,13 +225,20 @@ function Moderation() {
                   <div className="report-target">
                     <strong>Reported User:</strong>
                     <div className="target-actions">
-                      <span>User ID: {report.reported_user_id}</span>
-                      <button
-                        className="btn-danger btn-small"
-                        onClick={() => openDeleteAccountModal(report.reported_user_id, report.id)}
-                      >
-                        Delete Account
-                      </button>
+                      <span>
+                        {report.reported_user 
+                          ? `${report.reported_user.display_name} (ID: ${report.reported_user_id})`
+                          : `User ID: ${report.reported_user_id}`
+                        }
+                      </span>
+                      {!report.is_crisis && (
+                        <button
+                          className="btn-danger btn-small"
+                          onClick={() => openDeleteAccountModal(report.reported_user_id, report.id)}
+                        >
+                          Delete Account
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}
@@ -244,12 +251,14 @@ function Moderation() {
                     >
                       Warn
                     </button>
-                    <button
-                      className="btn-danger"
-                      onClick={() => openActionDialog(report.id, 'ban')}
-                    >
-                      Ban
-                    </button>
+                    {!report.is_crisis && (
+                      <button
+                        className="btn-danger"
+                        onClick={() => openActionDialog(report.id, 'ban')}
+                      >
+                        Ban
+                      </button>
+                    )}
                     <button
                       className="btn-secondary"
                       onClick={() => openActionDialog(report.id, 'dismiss')}

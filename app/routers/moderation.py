@@ -13,13 +13,18 @@ router = APIRouter()
 @router.get("/reports", response_model=List[schemas.ReportRead])
 def get_reports(
     status: Optional[str] = Query(None, description="Filter by report status (open, resolved, dismissed)"),
+    include_crisis: bool = Query(True, description="Include crisis reports"),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
     """Get all reports for moderation. Only accessible by moderators."""
     moderator = require_moderator(current_user)
     
-    query = db.query(models.Report).filter(models.Report.is_crisis == False)
+    query = db.query(models.Report)
+    
+    # Optionally filter out crisis reports
+    if not include_crisis:
+        query = query.filter(models.Report.is_crisis == False)
     
     if status:
         try:

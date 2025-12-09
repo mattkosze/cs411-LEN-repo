@@ -48,6 +48,9 @@ class ReportRead(BaseModel):
     resolution_impact: Optional[str]
     created_at: float
     resolved_at: Optional[float]
+    # Include user info for display
+    reported_user: Optional[UserBase] = None
+    reporting_user: Optional[UserBase] = None
 
 class DetermineActionInput(BaseModel):
     report_id : int

@@ -190,18 +190,20 @@ def test_seed_initial_boards_when_not_empty_does_nothing():
 # ---------- crisis_service tests ----------
 
 def test_escalate_crisis_creates_ticket_and_audit():
-    db = FakeSession({models.CrisisTicket: [], models.AuditLogEntry: []})
+    db = FakeSession({models.CrisisTicket: [], models.AuditLogEntry: [], models.Report: []})
     data = SimpleNamespace(
         user_id=1,
         report_id=2,
         content_snip="urgent situation",
     )
+    current_user = SimpleNamespace(id=1)
 
-    ticket = crisis_service.escalate_crisis(db, data)
+    ticket = crisis_service.escalate_crisis(db, data, current_user)
 
     assert isinstance(ticket, models.CrisisTicket)
     assert len(db.data[models.CrisisTicket]) == 1
     assert len(db.data[models.AuditLogEntry]) == 1
+    assert len(db.data[models.Report]) == 1  # Now creates a report too
 
 
 # ---------- messaging_service tests ----------
@@ -302,17 +304,56 @@ def test_determine_action_missing_report_raises():
     assert exc.value.status_code == 404
 
 
-def test_determine_action_crisis_report_raises():
+def test_determine_action_crisis_report_ban_raises():
+    """Crisis reports cannot be banned, only warned or dismissed"""
     report = models.Report()
     report.id = 1
     report.is_crisis = True
-    db = FakeSession({models.Report: [report]})
+    report.status = models.ReportStatus.OPEN
+    report.resolution_impact = None
+    report.reported_user_id = None
+    db = FakeSession({models.Report: [report], models.AuditLogEntry: []})
     moderator = SimpleNamespace(id=1)
-    data = SimpleNamespace(action="warn", report_id=1, mod_note=None)
+    data = SimpleNamespace(action="ban", report_id=1, mod_note=None)
 
     with pytest.raises(HTTPException) as exc:
         moderation_service.determine_action(db, moderator, data)
     assert exc.value.status_code == 400
+    assert "Cannot ban on crisis reports" in str(exc.value.detail)
+
+
+def test_determine_action_crisis_report_warn_allowed():
+    """Crisis reports can be warned"""
+    report = models.Report()
+    report.id = 1
+    report.is_crisis = True
+    report.status = models.ReportStatus.OPEN
+    report.resolution_impact = None
+    report.reported_user_id = None
+    db = FakeSession({models.Report: [report], models.AuditLogEntry: []})
+    moderator = SimpleNamespace(id=1)
+    data = SimpleNamespace(action="warn", report_id=1, mod_note="Checking on user")
+
+    result = moderation_service.determine_action(db, moderator, data)
+    assert result.status == models.ReportStatus.RESOLVED
+    assert result.resolution_impact == "warn"
+
+
+def test_determine_action_crisis_report_dismiss_allowed():
+    """Crisis reports can be dismissed"""
+    report = models.Report()
+    report.id = 1
+    report.is_crisis = True
+    report.status = models.ReportStatus.OPEN
+    report.resolution_impact = None
+    report.reported_user_id = None
+    db = FakeSession({models.Report: [report], models.AuditLogEntry: []})
+    moderator = SimpleNamespace(id=1)
+    data = SimpleNamespace(action="dismiss", report_id=1, mod_note=None)
+
+    result = moderation_service.determine_action(db, moderator, data)
+    assert result.status == models.ReportStatus.DISMISSED
+    assert result.resolution_impact == "dismiss"
 
 
 def test_determine_action_ban_resolves_report_and_bans_user():
