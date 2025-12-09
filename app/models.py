@@ -12,7 +12,6 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from zoneinfo import ZoneInfo
 import enum
 
 from .db import Base

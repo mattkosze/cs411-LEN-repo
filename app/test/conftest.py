@@ -44,9 +44,16 @@ app.dependency_overrides[get_db] = override_get_db
 @pytest.fixture(scope="function", autouse=True)
 def create_test_db():
     """Create all tables fresh for each test."""
+    # Clear startup handlers to prevent init_db() from running with production DB
+    original_startup = list(app.router.on_startup)
+    app.router.on_startup.clear()
+    
     Base.metadata.create_all(bind=engine)
     yield
     Base.metadata.drop_all(bind=engine)
+    
+    # Restore startup handlers after test
+    app.router.on_startup.extend(original_startup)
 
 
 @pytest.fixture()
