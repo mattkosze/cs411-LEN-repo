@@ -12,7 +12,6 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from zoneinfo import ZoneInfo
 import enum
 
 from .db import Base
@@ -47,16 +46,14 @@ class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String(255), unique=True, index=True, nullable=True)
-    hashedpassword = Column(String(255), nullable=True)  # Increased to accommodate bcrypt hashes (60 chars)
-    displayname = Column(String(50))
-    isanonymous = Column(Boolean, default=True)
+    hashed_password = Column(String(255), nullable=True)
+    display_name = Column(String(50))
+    is_anonymous = Column(Boolean, default=True)
     role = Column(Enum(UserRole), default=UserRole.USER)
-    isbanned = Column(Boolean, default=False)
+    is_banned = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
 
     posts = relationship("Post", back_populates="author")
-    reports_made = relationship("Report", back_populates="reporting_user", foreign_keys="Report.reported_user_id")
-    reports_received = relationship("Report", back_populates="reported_user", foreign_keys="Report.reported_user_id")
     reports_made = relationship(
         "Report",
         back_populates="reporting_user",
@@ -80,7 +77,7 @@ class Post(Base):
     group_id = Column(Integer, ForeignKey("condition_boards.id"), nullable=True)
     content = Column(Text, nullable=False)
     status = Column(Enum(PostStatus), default=PostStatus.ACTIVE)
-    createdat = Column(Float, default=datetime.now().timestamp())
+    created_at = Column(Float, default=lambda: datetime.now().timestamp())
     author = relationship("User", back_populates="posts")
     reports = relationship("Report", back_populates="post")
 
@@ -90,9 +87,8 @@ class ConditionBoard(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), unique=True, nullable=False)
     description = Column(Text, nullable=True)
-    createdat = Column(Float, default=datetime.now().timestamp())
-    updated_at = Column(Float, default=datetime.now().timestamp())
-
+    created_at = Column(Float, default=lambda: datetime.now().timestamp())
+    updated_at = Column(Float, default=lambda: datetime.now().timestamp())
 
     posts = relationship("Post", backref="board")
 
@@ -106,10 +102,10 @@ class Report(Base):
     reason = Column(Enum(ReportReason), nullable=False)
     details = Column(Text, nullable=True)  # Optional additional details from reporter
     is_crisis = Column(Boolean, default=False)
-    createdat = Column(Float, default=datetime.now().timestamp())
+    created_at = Column(Float, default=lambda: datetime.now().timestamp())
     status = Column(Enum(ReportStatus), default=ReportStatus.OPEN)
-    resolvedat = Column(Float, default=datetime.now().timestamp())
-    resolutionimpact = Column(String(50), nullable=True)
+    resolved_at = Column(Float, nullable=True)
+    resolution_impact = Column(String(50), nullable=True)
 
     reported_user = relationship("User", back_populates="reports_received", foreign_keys=[reported_user_id])
     reporting_user = relationship("User", back_populates="reports_made", foreign_keys=[reporting_user_id])
@@ -122,8 +118,8 @@ class CrisisTicket(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     report_id = Column(Integer, ForeignKey("reports.id"), nullable=True)
     status = Column(Enum(CrisisStatus), default=CrisisStatus.OPEN)
-    createdat = Column(Float, default=datetime.now().timestamp())
-    updated_at = Column(Float, default=datetime.now().timestamp())
+    created_at = Column(Float, default=lambda: datetime.now().timestamp())
+    updated_at = Column(Float, default=lambda: datetime.now().timestamp())
 
 
 class AuditLogEntry(Base):
@@ -135,4 +131,4 @@ class AuditLogEntry(Base):
     target_type = Column(String(100), nullable=True)
     target_id = Column(Integer, nullable=True)
     details = Column(Text, nullable=True)
-    createdat = Column(Float, default=datetime.now().timestamp())
+    created_at = Column(Float, default=lambda: datetime.now().timestamp())

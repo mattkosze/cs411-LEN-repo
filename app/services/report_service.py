@@ -49,10 +49,10 @@ def create_report(
             detail="You have already reported this post"
         )
     
-    #determines if this is a crisis report
+    # determines if this is a crisis report
     is_crisis = data.reason == models.ReportReason.CRISIS
     
-    #creates report
+    # creates report
     report = models.Report(
         reporting_user_id=reporter.id,
         reported_user_id=post.author_id,
@@ -60,7 +60,7 @@ def create_report(
         reason=data.reason,
         details=data.details,
         is_crisis=is_crisis,
-        createdat=datetime.now().timestamp(),
+        created_at=datetime.now().timestamp(),
     )
     
     db.add(report)

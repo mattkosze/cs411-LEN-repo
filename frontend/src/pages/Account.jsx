@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { api } from '../services/api'
+import { formatDateTime } from '../utils/constants'
 import './Account.css'
 
 function Account() {
@@ -9,6 +10,14 @@ function Account() {
   const [loading, setLoading] = useState(true)
   const [searchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'profile')
+  const navigate = useNavigate()
+  
+  // Settings form state
+  const [displayName, setDisplayName] = useState('')
+  const [isAnonymous, setIsAnonymous] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState(null)
+  const [saveSuccess, setSaveSuccess] = useState(false)
 
   useEffect(() => {
     loadUserData()
@@ -26,6 +35,8 @@ function Account() {
       // Set the User
       const user = await api.getCurrentUser()
       setUserInfo(user)
+      setDisplayName(user.display_name || '')
+      setIsAnonymous(user.is_anonymous || false)
 
       // Query posts for the selected user from our DB
       const allPosts = await api.getPosts()
@@ -39,9 +50,45 @@ function Account() {
     }
   }
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
+  const handleSaveSettings = async (e) => {
+    e.preventDefault()
+    setIsSaving(true)
+    setSaveError(null)
+    setSaveSuccess(false)
+    
+    try {
+      const updatedUser = await api.updateAccount({
+        display_name: displayName,
+        is_anonymous: isAnonymous
+      })
+      setUserInfo(updatedUser)
+      setSaveSuccess(true)
+      setTimeout(() => setSaveSuccess(false), 3000)
+    } catch (error) {
+      console.error('Error saving settings:', error)
+      setSaveError(error.message || 'Failed to save settings')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleDeleteAccount = async () => {
+    const confirmed = window.confirm(
+      'Are you sure you want to delete your account? This action cannot be undone. All your posts will be anonymized.'
+    )
+    if (!confirmed) return
+
+    const reason = window.prompt('Please provide a reason for deleting your account (optional):')
+    
+    try {
+      await api.deleteAccount(reason || 'User requested deletion')
+      await api.logout()
+      navigate('/')
+      window.location.reload()
+    } catch (error) {
+      console.error('Error deleting account:', error)
+      alert('Failed to delete account: ' + (error.message || 'Unknown error'))
+    }
   }
 
   if (loading) {
@@ -90,7 +137,7 @@ function Account() {
                 <div className="profile-info">
                   <div className="info-row">
                     <label>Display Name:</label>
-                    <span>{userInfo.isanonymous ? 'Anonymous' : userInfo.displayname}</span>
+                    <span>{userInfo.is_anonymous ? 'Anonymous' : userInfo.display_name}</span>
                   </div>
                   <div className="info-row">
                     <label>User ID:</label>
@@ -109,7 +156,7 @@ function Account() {
                   </div>
                   <div className="info-row">
                     <label>Anonymous Mode:</label>
-                    <span>{userInfo.isanonymous ? 'Yes' : 'No'}</span>
+                    <span>{userInfo.is_anonymous ? 'Yes' : 'No'}</span>
                   </div>
                 </div>
               ) : (
@@ -133,7 +180,7 @@ function Account() {
                   <div key={post.id} className="user-post-card">
                     <div className="post-header">
                       <h3>Post #{post.id}</h3>
-                      <time>{formatDate(post.createdat)}</time>
+                      <time>{formatDateTime(post.created_at)}</time>
                     </div>
                     <div className="post-content-preview">
                       {post.content.substring(0, 150)}
@@ -156,31 +203,51 @@ function Account() {
 
         {activeTab === 'settings' && (
           <div className="settings-section">
-            <div className="settings-card">
+            <form className="settings-card" onSubmit={handleSaveSettings}>
               <h2>Account Settings</h2>
+              {saveError && <div className="error-message">{saveError}</div>}
+              {saveSuccess && <div className="success-message">Settings saved successfully!</div>}
               <div className="settings-list">
                 <div className="setting-item">
-                  <label>Display Name</label>
-                  <input type="text" placeholder="Your display name" defaultValue={userInfo?.displayname || ''} />
+                  <label htmlFor="displayName">Display Name</label>
+                  <input 
+                    type="text" 
+                    id="displayName"
+                    placeholder="Your display name" 
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                  />
                   <p className="setting-hint">This name will be shown on your posts</p>
                 </div>
                 <div className="setting-item">
                   <label>Anonymous Mode</label>
                   <label className="toggle-switch">
-                    <input type="checkbox" defaultChecked={userInfo?.isanonymous || false} />
+                    <input 
+                      type="checkbox" 
+                      checked={isAnonymous}
+                      onChange={(e) => setIsAnonymous(e.target.checked)}
+                    />
                     <span className="toggle-slider"></span>
                   </label>
                   <p className="setting-hint">When enabled, your posts will show as anonymous</p>
                 </div>
                 <div className="setting-item">
-                  <button className="btn-danger">Delete Account</button>
+                  <button 
+                    type="button" 
+                    className="btn-danger"
+                    onClick={handleDeleteAccount}
+                  >
+                    Delete Account
+                  </button>
                   <p className="setting-hint">Permanently delete your account and anonymize all content</p>
                 </div>
               </div>
               <div className="settings-actions">
-                <button className="btn-primary">Save Changes</button>
+                <button type="submit" className="btn-primary" disabled={isSaving}>
+                  {isSaving ? 'Saving...' : 'Save Changes'}
+                </button>
               </div>
-            </div>
+            </form>
           </div>
         )}
       </div>

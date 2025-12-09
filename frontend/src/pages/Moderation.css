@@ -116,6 +116,47 @@
   font-weight: 600;
 }
 
+.report-reason-tag {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  background: #e9ecef;
+  color: #495057;
+  text-transform: capitalize;
+}
+
+/* Reason-specific colors */
+.reason-harassment {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.reason-spam {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.reason-misinformation {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.reason-crisis {
+  background: #dc3545;
+  color: white;
+}
+
+.reason-inappropriate {
+  background: #e2d5f1;
+  color: #563d7c;
+}
+
+.reason-other {
+  background: #e9ecef;
+  color: #495057;
+}
+
 .report-time {
   color: #666;
   font-size: 0.9rem;
@@ -127,22 +168,23 @@
   gap: 1rem;
 }
 
-.report-reason {
+.report-comment {
   background: #f8f9fa;
   padding: 1rem;
   border-radius: 4px;
 }
 
-.report-reason strong {
+.report-comment strong {
   display: block;
   margin-bottom: 0.5rem;
   color: #333;
 }
 
-.report-reason p {
+.report-comment p {
   margin: 0;
   color: #555;
   line-height: 1.5;
+  font-style: italic;
 }
 
 .report-target {
@@ -156,6 +198,23 @@
 
 .report-target strong {
   color: #333;
+}
+
+.reported-post-content {
+  margin: 0.5rem 0;
+}
+
+.post-preview {
+  margin: 0;
+  padding: 0.75rem;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #444;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
 .target-actions {
@@ -177,19 +236,44 @@
   margin-top: 1rem;
 }
 
+/* Consistent action button base styles */
+.report-actions > button {
+  padding: 0.5rem 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 80px;
+  text-align: center;
+}
+
 .btn-warn {
   background: #ffc107;
   color: #000;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background 0.2s;
 }
 
 .btn-warn:hover {
   background: #e0a800;
+}
+
+.report-actions .btn-danger {
+  background: #dc3545;
+  color: white;
+}
+
+.report-actions .btn-danger:hover {
+  background: #c82333;
+}
+
+.report-actions .btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.report-actions .btn-secondary:hover {
+  background: #5a6268;
 }
 
 .action-reason-input {

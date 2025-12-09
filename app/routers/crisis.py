@@ -14,7 +14,7 @@ def escalate_crisis(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    ticket = crisis_service.escalate_crisis(db, data)
+    ticket = crisis_service.escalate_crisis(db, data, current_user)
     return schemas.CrisisEscalationResult(
         ticket_id=ticket.id,
         status=ticket.status,

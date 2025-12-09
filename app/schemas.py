@@ -1,30 +1,32 @@
 from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 from datetime import datetime
-from .models import UserRole, PostStatus, ReportStatus, CrisisStatus, ReportReason, ConditionBoard 
+from .models import UserRole, PostStatus, ReportStatus, CrisisStatus, ReportReason
+
 
 class UserBase(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
     
-    id : int
-    displayname : str
-    isanonymous : bool
+    id: int
+    display_name: str
+    is_anonymous: bool
     role: UserRole
 
+
 class PostCreate(BaseModel):
-    group_id : Optional[int] = None
-    content : str
-    posttime : float
+    group_id: Optional[int] = None
+    content: str = Field(min_length=1)
+    posttime: float
 
 class PostRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     
-    id : int
-    group_id : Optional[int]
-    content : str
-    status : PostStatus
-    createdat : float
-    author : UserBase
+    id: int
+    group_id: Optional[int]
+    content: str
+    status: PostStatus
+    created_at: float
+    author: UserBase
 
 class ReportCreate(BaseModel):
     reported_user_id : Optional[int] = None
@@ -35,17 +37,22 @@ class ReportCreate(BaseModel):
 class ReportRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     
-    id : int
-    reporting_user_id : int
-    reported_user_id : Optional[int]
-    post_id : Optional[int]
-    reason : ReportReason
-    details : Optional[str]
-    is_crisis : bool
-    status : ReportStatus
-    resolutionimpact : Optional[str]
-    createdat : float
-    resolvedat : Optional[float]
+    id: int
+    reporting_user_id: int
+    reported_user_id: Optional[int]
+    post_id: Optional[int]
+    reason: ReportReason
+    details: Optional[str]
+    is_crisis: bool
+    status: ReportStatus
+    resolution_impact: Optional[str]
+    created_at: float
+    resolved_at: Optional[float]
+    # Include user info for display
+    reported_user: Optional[UserBase] = None
+    reporting_user: Optional[UserBase] = None
+    # Include post info for display
+    post: Optional[PostRead] = None
 
 class DetermineActionInput(BaseModel):
     report_id : int
@@ -62,6 +69,7 @@ class DeleteAccountResult(BaseModel):
 class CrisisEscalationInput(BaseModel):
     user_id : Optional[int] = None
     report_id : Optional[int] = None
+    post_id : Optional[int] = None  # The post that triggered the crisis
     content_snip : Optional[str] = None
 
 class CrisisEscalationResult(BaseModel):
@@ -87,13 +95,19 @@ class ConditionBoardRead(ConditionBoardBase):
     pass
 
 class UserRegister(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    
     email: str = Field(..., max_length=255)
     password: str = Field(..., min_length=6)
-    displayname: str = Field(..., max_length=50)
+    display_name: str = Field(..., max_length=50, alias="displayname")
 
 class UserLogin(BaseModel):
     email: str
     password: str
+
+class UserUpdate(BaseModel):
+    display_name: Optional[str] = Field(None, max_length=50)
+    is_anonymous: Optional[bool] = None
 
 class Token(BaseModel):
     access_token: str

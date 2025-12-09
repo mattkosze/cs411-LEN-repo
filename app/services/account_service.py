@@ -1,30 +1,18 @@
+"""
+Account service for user registration, authentication, and account management.
+
+This module handles account-related business logic, delegating authentication
+operations to auth_service for proper separation of concerns.
+"""
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from .. import models, schemas
-import bcrypt
-from datetime import datetime, timedelta
-from jose import JWTError, jwt
-from ..config import settings
+from .auth_service import hash_password, verify_password, create_access_token
 
-def hash_password(password: str) -> str:
-    """Hash a password using bcrypt"""
-    salt = bcrypt.gensalt()
-    hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
-    return hashed.decode('utf-8')
+# Re-export auth functions for backward compatibility
+__all__ = ['hash_password', 'verify_password', 'create_access_token', 
+           'register_user', 'authenticate_user', 'delete_account', 'update_account']
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a password against a hash"""
-    if not hashed_password:
-        return False
-    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
-
-def create_access_token(data: dict):
-    """Create a JWT access token"""
-    to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
-    return encoded_jwt
 
 def register_user(db: Session, user_data: schemas.UserRegister) -> models.User:
     """Register a new user"""
@@ -42,9 +30,9 @@ def register_user(db: Session, user_data: schemas.UserRegister) -> models.User:
     # Create new user
     new_user = models.User(
         email=user_data.email,
-        hashedpassword=hashed_password,
-        displayname=user_data.displayname,
-        isanonymous=False,
+        hashed_password=hashed_password,
+        display_name=user_data.display_name,
+        is_anonymous=False,
         role=models.UserRole.USER,
         is_active=True
     )
@@ -70,7 +58,7 @@ def authenticate_user(db: Session, email: str, password: str) -> models.User:
             detail="Account is deleted"
         )
     
-    if not verify_password(password, user.hashedpassword):
+    if not verify_password(password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password"
@@ -79,16 +67,29 @@ def authenticate_user(db: Session, email: str, password: str) -> models.User:
     return user
 
 def delete_account(db, user, reason):
-    user.displayname = "Deleted User"
+    user.display_name = "Deleted User"
     user.email = None
-    user.hashedpassword = None
-    user.isanonymous = True
+    user.hashed_password = None
+    user.is_anonymous = True
     user.is_active = False
 
     db.add(user)
 
-    audit = models.AuditLogEntry(actor_id=user.id,action_type="delete_account",target_type="User",target_id=user.id, details=reason or "")
+    audit = models.AuditLogEntry(actor_id=user.id, action_type="delete_account", target_type="User", target_id=user.id, details=reason or "")
     db.add(audit)
     db.commit()
 
-    return schemas.DeleteAccountResult(success=True,message="Account deleted and content anonymized")
+    return schemas.DeleteAccountResult(success=True, message="Account deleted and content anonymized")
+
+def update_account(db, user, update_data: schemas.UserUpdate):
+    """Update user account settings"""
+    if update_data.display_name is not None:
+        user.display_name = update_data.display_name
+    if update_data.is_anonymous is not None:
+        user.is_anonymous = update_data.is_anonymous
+    
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    
+    return user

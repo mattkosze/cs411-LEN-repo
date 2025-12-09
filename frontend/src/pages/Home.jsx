@@ -77,7 +77,7 @@ function Home() {
   return (
     <div className="home">
       <div className="home-intro">
-        <h2>Welcome to len</h2>
+        <h2>Welcome to LEN!</h2>
       </div>
 
       <div className="search-container">
@@ -89,6 +89,8 @@ function Home() {
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
+
+      <div className="section-separator"></div>
 
       {searchQuery && filteredBoards.length === 0 && boards.length > 0 && (
         <div className="search-results-message">

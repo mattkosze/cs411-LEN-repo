@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .routers import accounts, posts, moderation, crisis, boards
 from .init_db import init_db
+from .config import settings
 
 app = FastAPI(
     title="LEN - Community Support Backend",
@@ -13,7 +14,7 @@ app = FastAPI(
 # Middleware for frontend to integrating with backend 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5173"],
+    allow_origins=settings.cors_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

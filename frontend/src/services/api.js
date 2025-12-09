@@ -1,10 +1,8 @@
-// Set to default to localhost:8000
-const API_BASE_URL = 'http://localhost:8000'
+// API base URL - uses environment variable if available, defaults to localhost
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 // Helper to get/set auth token
 const AUTH_TOKEN_KEY = 'len_auth_token'
-// Helper to get/set simulated user ID (for dev/testing)
-const SIMULATED_USER_KEY = 'len_simulated_user_id'
 
 async function request(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`
@@ -18,12 +16,6 @@ async function request(endpoint, options = {}) {
   const token = localStorage.getItem(AUTH_TOKEN_KEY)
   if (token) {
     headers['Authorization'] = `Bearer ${token}`
-  }
-  
-  // Add simulated user header if set (for dev/testing, fallback)
-  const simulatedUserId = localStorage.getItem(SIMULATED_USER_KEY)
-  if (simulatedUserId) {
-    headers['x-user-id'] = simulatedUserId
   }
 
   const config = {
@@ -138,19 +130,6 @@ export const api = {
     return request('/accounts/')
   },
 
-  // Helper methods for user simulation
-  setSimulatedUser: (userId) => {
-    if (userId) {
-      localStorage.setItem(SIMULATED_USER_KEY, userId)
-    } else {
-      localStorage.removeItem(SIMULATED_USER_KEY)
-    }
-  },
-
-  getSimulatedUser: () => {
-    return localStorage.getItem(SIMULATED_USER_KEY)
-  },
-
   // Alert mods if crisis
   crisisEscalation: (data) => {
     return request('/crisis/escalate', {
@@ -180,15 +159,39 @@ export const api = {
     })
   },
 
-  deletePostAsModerator: (postId, reason) => {
-    return request(`/moderation/delete-post/${postId}?reason=${encodeURIComponent(reason)}`, {
+  deletePostAsModerator: (postId, reason, reportId = null) => {
+    let url = `/moderation/delete-post/${postId}?reason=${encodeURIComponent(reason)}`
+    if (reportId) {
+      url += `&report_id=${reportId}`
+    }
+    return request(url, {
       method: 'POST'
     })
   },
 
-  deleteAccountAsModerator: (userId, reason) => {
-    return request(`/moderation/delete-account/${userId}?reason=${encodeURIComponent(reason)}`, {
+  deleteAccountAsModerator: (userId, reason, reportId = null) => {
+    let url = `/moderation/delete-account/${userId}?reason=${encodeURIComponent(reason)}`
+    if (reportId) {
+      url += `&report_id=${reportId}`
+    }
+    return request(url, {
       method: 'DELETE'
+    })
+  },
+
+  // Delete own account
+  deleteAccount: (reason) => {
+    return request('/accounts/me/', {
+      method: 'DELETE',
+      body: { reason }
+    })
+  },
+
+  // Update own account settings
+  updateAccount: (data) => {
+    return request('/accounts/me/', {
+      method: 'PATCH',
+      body: data
     })
   },
   

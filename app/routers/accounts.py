@@ -38,9 +38,12 @@ def logout():
     return {"message": "Successfully logged out"}
 
 @router.get("/", response_model=List[schemas.UserBase])
-def get_all_users(db: Session = Depends(get_db)):
-    """Get all users (for dev/testing user switching)"""
-    return db.query(models.User).all()
+def get_all_users(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """Get all users (requires authentication)"""
+    return db.query(models.User).filter(models.User.is_active == True).all()
 
 @router.get("/me/", response_model=schemas.UserBase)
 def get_current_user_info(
@@ -49,6 +52,15 @@ def get_current_user_info(
 ):
     """Get current user information"""
     return current_user
+
+@router.patch("/me/", response_model=schemas.UserBase)
+def update_current_user(
+    update_data: schemas.UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """Update current user settings"""
+    return account_service.update_account(db, current_user, update_data)
 
 @router.delete("/me/", response_model=schemas.DeleteAccountResult)
 def delete_my_account(

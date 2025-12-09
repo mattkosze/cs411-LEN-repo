@@ -20,7 +20,7 @@ def get_posts(
     if group_id is not None:
         query = query.filter(models.Post.group_id == group_id)
     
-    posts = query.order_by(models.Post.createdat.desc()).all()
+    posts = query.order_by(models.Post.created_at.desc()).all()
     return posts
 
 @router.post("/", response_model=schemas.PostRead)

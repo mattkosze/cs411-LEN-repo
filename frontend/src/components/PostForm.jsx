@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { api } from "../services/api" 
+import { detectCrisis } from '../utils/constants'
 import './PostForm.css'
 
 function PostForm({ groupId, onPostCreated, onCancel }) {
@@ -16,31 +17,32 @@ function PostForm({ groupId, onPostCreated, onCancel }) {
       return
     }
 
-    // Check for crisis keywords (case insensitive)
-    // Expand this in the future to have more comprehensive checking
-    const crisisKeywords = ['end it all', 'ending it', 'kill myself', 'going through it', 'feeling down', 'not feeling good', 'suicide', 'suicidal', 'want to die', 'harm myself']
-    const contentLower = content.toLowerCase()
-    const isCrisis = crisisKeywords.some(keyword => contentLower.includes(keyword))
-    
-    if (isCrisis) {
-      alert('Crisis detected. Moderators have been alerted and support resources are being prepared.')
-      try {
-        await api.crisisEscalation({
-          content_snip: content        
-        })
-      } catch (err) {
-        console.error('Error escalating crisis:', err)
-      }
-    }
+    // Check for crisis keywords using centralized utility
+    const isCrisis = detectCrisis(content)
 
     setLoading(true)
     setError(null)
     try {
-      await api.createPost({
+      // Create the post first
+      const newPost = await api.createPost({
         group_id: groupId,
         content: content.trim(),
         posttime: Date.now()
       })
+      
+      // If crisis detected, escalate with the post_id so moderators can see the post
+      if (isCrisis) {
+        alert('Crisis detected. Moderators have been alerted and support resources are being prepared.')
+        try {
+          await api.crisisEscalation({
+            content_snip: content,
+            post_id: newPost.id
+          })
+        } catch (err) {
+          console.error('Error escalating crisis:', err)
+        }
+      }
+      
       setContent('')
       onPostCreated()
     } catch (err) {

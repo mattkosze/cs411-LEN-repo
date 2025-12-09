@@ -8,7 +8,6 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 def get_db():
-    from sqlalchemy.orm import Session
     db = SessionLocal()
     try:
         yield db

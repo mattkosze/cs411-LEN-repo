@@ -4,22 +4,27 @@ from typing import List, Optional
 from ..db import get_db
 from .. import schemas, models
 from ..dependencies import get_current_user, require_moderator
-from ..services import moderation_service, account_service
+from ..services import moderation_service
 
-#router specifically for general moderation
+# router specifically for general moderation
 
 router = APIRouter()
 
 @router.get("/reports", response_model=List[schemas.ReportRead])
 def get_reports(
     status: Optional[str] = Query(None, description="Filter by report status (open, resolved, dismissed)"),
+    include_crisis: bool = Query(True, description="Include crisis reports"),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
     """Get all reports for moderation. Only accessible by moderators."""
     moderator = require_moderator(current_user)
     
-    query = db.query(models.Report).filter(models.Report.is_crisis == False)
+    query = db.query(models.Report)
+    
+    # Optionally filter out crisis reports
+    if not include_crisis:
+        query = query.filter(models.Report.is_crisis == False)
     
     if status:
         try:
@@ -28,7 +33,7 @@ def get_reports(
         except ValueError:
             pass
     
-    reports = query.order_by(models.Report.createdat.desc()).all()
+    reports = query.order_by(models.Report.created_at.desc()).all()
     return reports
 
 @router.post("/determine-action", response_model=schemas.DetermineActionResult)
@@ -46,12 +51,13 @@ def determine_action(
 def delete_post(
     post_id: int,
     reason: str = Query(..., description="Reason for deletion"),
+    report_id: Optional[int] = Query(None, description="Report ID to resolve"),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
     """Delete a post. Only accessible by moderators."""
     moderator = require_moderator(current_user)
-    post = moderation_service.delete_post(db, moderator, post_id, reason)
+    post = moderation_service.delete_post(db, moderator, post_id, reason, report_id)
     return schemas.DeletePostResult(
         success=True,
         post_id=post.id,
@@ -62,6 +68,7 @@ def delete_post(
 def delete_account(
     user_id: int,
     reason: str = Query(..., description="Reason for account deletion"),
+    report_id: Optional[int] = Query(None, description="Report ID to resolve"),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
@@ -69,8 +76,5 @@ def delete_account(
     moderator = require_moderator(current_user)
     
     user_to_delete = db.query(models.User).filter(models.User.id == user_id).first()
-    if not user_to_delete:
-        from fastapi import HTTPException
-        raise HTTPException(status_code=404, detail="User not found")
     
-    return account_service.delete_account(db, user_to_delete, reason)
+    return moderation_service.delete_account_as_moderator(db, moderator, user_to_delete, reason, report_id)
