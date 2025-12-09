@@ -12,20 +12,7 @@ security = HTTPBearer(auto_error=False)
 def get_current_user(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     db: Session = Depends(get_db),
-    x_user_id: Optional[str] = Header(None)  # Keep for backward compatibility with dev switcher
 ):
-    # For development/demo: allow switching user via header (fallback)
-    if x_user_id:
-        try:
-            user_id = int(x_user_id)
-            user = db.query(models.User).filter(models.User.id == user_id).first()
-            if user:
-                if not user.is_active:
-                    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is deleted")
-                return user
-        except ValueError:
-            pass
-
     # Primary authentication via JWT token
     if not credentials:
         raise HTTPException(
