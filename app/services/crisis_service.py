@@ -8,13 +8,14 @@ def escalate_crisis(db: Session, data: schemas.CrisisEscalationInput, current_us
     """
     Creates a crisis ticket and an associated report for moderator review.
     The report will appear in the moderation dashboard with is_crisis=True.
+    Links to the post that triggered the crisis for moderator review.
     """
     
     # Create a crisis report that will show in the moderation dashboard
     report = models.Report(
         reporting_user_id=current_user.id,  # The user who triggered the crisis detection
         reported_user_id=current_user.id,   # The user who posted the crisis content (same user)
-        post_id=None,  # Could be linked if we have post context
+        post_id=data.post_id,  # Link to the post that triggered the crisis
         reason=models.ReportReason.CRISIS,
         details=data.content_snip[:200] if data.content_snip else "Crisis detected in content",
         is_crisis=True,

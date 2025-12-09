@@ -194,6 +194,7 @@ def test_escalate_crisis_creates_ticket_and_audit():
     data = SimpleNamespace(
         user_id=1,
         report_id=2,
+        post_id=5,  # The post that triggered the crisis
         content_snip="urgent situation",
     )
     current_user = SimpleNamespace(id=1)
@@ -204,6 +205,9 @@ def test_escalate_crisis_creates_ticket_and_audit():
     assert len(db.data[models.CrisisTicket]) == 1
     assert len(db.data[models.AuditLogEntry]) == 1
     assert len(db.data[models.Report]) == 1  # Now creates a report too
+    # Verify the report is linked to the post
+    report = db.data[models.Report][0]
+    assert report.post_id == 5
 
 
 # ---------- messaging_service tests ----------
@@ -305,13 +309,14 @@ def test_determine_action_missing_report_raises():
 
 
 def test_determine_action_crisis_report_ban_raises():
-    """Crisis reports cannot be banned, only warned or dismissed"""
+    """Crisis reports cannot be banned - only delete_post or dismiss allowed"""
     report = models.Report()
     report.id = 1
     report.is_crisis = True
     report.status = models.ReportStatus.OPEN
     report.resolution_impact = None
     report.reported_user_id = None
+    report.post_id = None
     db = FakeSession({models.Report: [report], models.AuditLogEntry: []})
     moderator = SimpleNamespace(id=1)
     data = SimpleNamespace(action="ban", report_id=1, mod_note=None)
@@ -319,24 +324,49 @@ def test_determine_action_crisis_report_ban_raises():
     with pytest.raises(HTTPException) as exc:
         moderation_service.determine_action(db, moderator, data)
     assert exc.value.status_code == 400
-    assert "Cannot ban on crisis reports" in str(exc.value.detail)
+    assert "Crisis reports can only use 'Delete Post' or 'Dismiss'" in str(exc.value.detail)
 
 
-def test_determine_action_crisis_report_warn_allowed():
-    """Crisis reports can be warned"""
+def test_determine_action_crisis_report_delete_post_allowed():
+    """Crisis reports can use delete_post to remove the crisis content"""
+    post = models.Post()
+    post.id = 5
+    post.status = models.PostStatus.ACTIVE
+    
     report = models.Report()
     report.id = 1
     report.is_crisis = True
     report.status = models.ReportStatus.OPEN
     report.resolution_impact = None
     report.reported_user_id = None
-    db = FakeSession({models.Report: [report], models.AuditLogEntry: []})
+    report.post_id = 5
+    db = FakeSession({models.Report: [report], models.Post: [post], models.AuditLogEntry: []})
     moderator = SimpleNamespace(id=1)
-    data = SimpleNamespace(action="warn", report_id=1, mod_note="Checking on user")
+    data = SimpleNamespace(action="delete_post", report_id=1, mod_note="Removing crisis content")
 
     result = moderation_service.determine_action(db, moderator, data)
     assert result.status == models.ReportStatus.RESOLVED
-    assert result.resolution_impact == "warn"
+    assert result.resolution_impact == "post_deleted"
+    assert post.status == models.PostStatus.DELETED
+
+
+def test_determine_action_crisis_report_warn_raises():
+    """Crisis reports cannot use warn - only delete_post or dismiss"""
+    report = models.Report()
+    report.id = 1
+    report.is_crisis = True
+    report.status = models.ReportStatus.OPEN
+    report.resolution_impact = None
+    report.reported_user_id = None
+    report.post_id = None
+    db = FakeSession({models.Report: [report], models.AuditLogEntry: []})
+    moderator = SimpleNamespace(id=1)
+    data = SimpleNamespace(action="warn", report_id=1, mod_note=None)
+
+    with pytest.raises(HTTPException) as exc:
+        moderation_service.determine_action(db, moderator, data)
+    assert exc.value.status_code == 400
+    assert "Crisis reports can only use 'Delete Post' or 'Dismiss'" in str(exc.value.detail)
 
 
 def test_determine_action_crisis_report_dismiss_allowed():

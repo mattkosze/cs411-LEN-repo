@@ -51,6 +51,8 @@ class ReportRead(BaseModel):
     # Include user info for display
     reported_user: Optional[UserBase] = None
     reporting_user: Optional[UserBase] = None
+    # Include post info for display
+    post: Optional[PostRead] = None
 
 class DetermineActionInput(BaseModel):
     report_id : int
@@ -67,6 +69,7 @@ class DeleteAccountResult(BaseModel):
 class CrisisEscalationInput(BaseModel):
     user_id : Optional[int] = None
     report_id : Optional[int] = None
+    post_id : Optional[int] = None  # The post that triggered the crisis
     content_snip : Optional[str] = None
 
 class CrisisEscalationResult(BaseModel):

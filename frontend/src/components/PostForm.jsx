@@ -19,26 +19,30 @@ function PostForm({ groupId, onPostCreated, onCancel }) {
 
     // Check for crisis keywords using centralized utility
     const isCrisis = detectCrisis(content)
-    
-    if (isCrisis) {
-      alert('Crisis detected. Moderators have been alerted and support resources are being prepared.')
-      try {
-        await api.crisisEscalation({
-          content_snip: content        
-        })
-      } catch (err) {
-        console.error('Error escalating crisis:', err)
-      }
-    }
 
     setLoading(true)
     setError(null)
     try {
-      await api.createPost({
+      // Create the post first
+      const newPost = await api.createPost({
         group_id: groupId,
         content: content.trim(),
         posttime: Date.now()
       })
+      
+      // If crisis detected, escalate with the post_id so moderators can see the post
+      if (isCrisis) {
+        alert('Crisis detected. Moderators have been alerted and support resources are being prepared.')
+        try {
+          await api.crisisEscalation({
+            content_snip: content,
+            post_id: newPost.id
+          })
+        } catch (err) {
+          console.error('Error escalating crisis:', err)
+        }
+      }
+      
       setContent('')
       onPostCreated()
     } catch (err) {

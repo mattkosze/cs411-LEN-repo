@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from .. import models, schemas
 
-VALID = {"warn", "ban", "dismiss"}
+VALID = {"warn", "ban", "dismiss", "delete_post", "delete_account"}
 
 def determine_action(db, moderator, data):
     # checks if the action reported is valid, and from there applies a given action to user. recorded in audit log
@@ -15,9 +15,61 @@ def determine_action(db, moderator, data):
     if not report:
         raise HTTPException(status_code=404, detail="Can't find report")
     
-    # Crisis reports can only be warned or dismissed, not banned
-    if report.is_crisis and data.action == "ban":
-        raise HTTPException(status_code=400, detail="Cannot ban on crisis reports - use warn or dismiss")
+    # Crisis reports can only use delete_post or dismiss, not warn/ban/delete_account
+    if report.is_crisis and data.action not in {"delete_post", "dismiss"}:
+        raise HTTPException(status_code=400, detail="Crisis reports can only use 'Delete Post' or 'Dismiss'")
+    
+    # Handle delete_post action - delete the post, warn the user, and resolve the report
+    if data.action == "delete_post":
+        if not report.post_id:
+            raise HTTPException(status_code=400, detail="No post associated with this report")
+        post = db.query(models.Post).filter(models.Post.id == report.post_id).first()
+        if post:
+            post.status = models.PostStatus.DELETED
+        # Also warn the user if there's a reported user (non-crisis only)
+        if report.reported_user_id and not report.is_crisis:
+            reported_user = db.query(models.User).get(report.reported_user_id)
+            # User is warned - could track warning count in future
+            report.resolution_impact = "post_deleted_user_warned"
+        else:
+            report.resolution_impact = "post_deleted"
+        report.status = models.ReportStatus.RESOLVED
+        audit = models.AuditLogEntry(
+            actor_id=moderator.id, 
+            action_type="moderation_delete_post_warn" if not report.is_crisis else "moderation_delete_post", 
+            target_type="Report", 
+            target_id=report.id, 
+            details=data.mod_note or ""
+        )
+        db.add(audit)
+        db.commit()
+        db.refresh(report)
+        return report
+    
+    # Handle delete_account action - ban and delete the account, resolve the report
+    if data.action == "delete_account":
+        if not report.reported_user_id:
+            raise HTTPException(status_code=400, detail="No user associated with this report")
+        reported_user = db.query(models.User).get(report.reported_user_id)
+        if reported_user:
+            # Ban the user first
+            reported_user.is_banned = True
+            # Then delete their account
+            from ..services import account_service
+            account_service.delete_account(db, reported_user, data.mod_note or "Banned and deleted by moderator")
+        report.status = models.ReportStatus.RESOLVED
+        report.resolution_impact = "account_banned_deleted"
+        audit = models.AuditLogEntry(
+            actor_id=moderator.id, 
+            action_type="moderation_ban_delete_account", 
+            target_type="Report", 
+            target_id=report.id, 
+            details=data.mod_note or ""
+        )
+        db.add(audit)
+        db.commit()
+        db.refresh(report)
+        return report
     
     # applying the action - dismiss goes to DISMISSED, others go to RESOLVED
     if data.action == "dismiss":
