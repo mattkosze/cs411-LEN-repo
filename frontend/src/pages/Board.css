@@ -31,6 +31,13 @@
   color: var(--text-primary);
 }
 
+.board-description {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  margin-top: 0.5rem;
+  line-height: 1.5;
+}
+
 .board-header .btn-primary {
   margin-top: 1rem;
 }

@@ -47,7 +47,7 @@ npm run dev
 ### 4. Access the Application
 
 - Visit `http://localhost:3000` in your browser.
-- You must log in, and you may either create a **user** account, using the sign-up functionality, or log in with an admin account with the username "admin@len.com" and password "lenmoderator1".
+- You must log in, and you may either create a **user** account, using the sign-up functionality, or log in with an admin account with the username "mod@len.com" and password "lenmoderator1".
 
 ### Notes
 
@@ -57,4 +57,8 @@ npm run dev
 
 ### Unit Tests
 
-- To run the python unit tests, use the terminal and run pytest --cov=app --cov-report=term-missing
+- To run the python unit tests, use the terminal and run 
+
+```
+pytest --cov=app --cov-report=term-missing
+```

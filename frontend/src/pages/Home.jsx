@@ -90,6 +90,8 @@ function Home() {
         />
       </div>
 
+      <div className="section-separator"></div>
+
       {searchQuery && filteredBoards.length === 0 && boards.length > 0 && (
         <div className="search-results-message">
           <p>No communities found matching "{searchQuery}"</p>

@@ -184,6 +184,7 @@ function Board() {
         <div className="board-title-section">
           <div>
             <h1>{board.name}</h1>
+            {board.description && <p className="board-description">{board.description}</p>}
           </div>
         </div>
         <button
