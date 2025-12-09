@@ -99,6 +99,10 @@ class UserLogin(BaseModel):
     email: str
     password: str
 
+class UserUpdate(BaseModel):
+    display_name: Optional[str] = Field(None, max_length=50)
+    is_anonymous: Optional[bool] = None
+
 class Token(BaseModel):
     access_token: str
     token_type: str

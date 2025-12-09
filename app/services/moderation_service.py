@@ -57,12 +57,37 @@ def delete_post(db, moderator, post_id, reason, report_id=None):
     
     # Resolve the report if report_id is provided
     if report_id:
-        report = db.query(models.Report).filter(models.Report.id == report_id).first()
-        if report and report.status == models.ReportStatus.OPEN:
-            report.status = models.ReportStatus.RESOLVED
-            report.resolution_impact = "post_deleted"
+        _resolve_report(db, moderator, report_id, "post_deleted", reason)
     
     db.commit()
     db.refresh(post)
 
     return post
+
+def _resolve_report(db, moderator, report_id, resolution_impact, reason):
+    """Helper to resolve a report with the given impact. Internal use only."""
+    report = db.query(models.Report).filter(models.Report.id == report_id).first()
+    if report and report.status == models.ReportStatus.OPEN:
+        report.status = models.ReportStatus.RESOLVED
+        report.resolution_impact = resolution_impact
+        audit = models.AuditLogEntry(
+            actor_id=moderator.id,
+            action_type=f"moderation_{resolution_impact}",
+            target_type="Report",
+            target_id=report.id,
+            details=reason or ""
+        )
+        db.add(audit)
+
+def delete_account_as_moderator(db, moderator, user_to_delete, reason, report_id=None):
+    """Delete a user account as a moderator action with optional report resolution."""
+    if not user_to_delete:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Resolve the report if report_id is provided
+    if report_id:
+        _resolve_report(db, moderator, report_id, "account_deleted", reason)
+    
+    # Delegate to account service for the actual deletion
+    from ..services import account_service
+    return account_service.delete_account(db, user_to_delete, reason)

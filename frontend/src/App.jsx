@@ -5,43 +5,17 @@ import Board from './pages/Board'
 import Account from './pages/Account'
 import Moderation from './pages/Moderation'
 import Auth from './components/Auth'
-import { api } from './services/api'
+import { UserProvider, useUser } from './hooks/useUser'
 import './App.css'
 import logo from './assets/logo.svg'
 
 function AppContent() {
   const [showAccountDropdown, setShowAccountDropdown] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [userRole, setUserRole] = useState(null)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
   const accountMenuRef = useRef(null)
   const navigate = useNavigate()
-
-  useEffect(() => {
-    checkAuth()
-  }, [])
-
-  const checkAuth = async () => {
-    setIsLoading(true)
-    const hasToken = api.isAuthenticated()
-    if (hasToken) {
-      try {
-        const user = await api.getCurrentUser()
-        setUserRole(user?.role || 'user')
-        setIsAuthenticated(true)
-      } catch (err) {
-        // Token invalid, clear it
-        api.logout()
-        setIsAuthenticated(false)
-        setUserRole(null)
-      }
-    } else {
-      setIsAuthenticated(false)
-      setUserRole(null)
-    }
-    setIsLoading(false)
-  }
+  
+  const { user, isAuthenticated, isLoading, isModerator, checkAuth, logout } = useUser()
 
   const handleAuthSuccess = () => {
     checkAuth()
@@ -50,27 +24,12 @@ function AppContent() {
 
   const handleLogout = async () => {
     try {
-      await api.logout()
-      setIsAuthenticated(false)
-      setUserRole(null)
+      await logout()
       setShowAccountDropdown(false)
       navigate('/')
     } catch (err) {
       console.error('Error logging out:', err)
-      // Still clear local state even if API call fails
-      setIsAuthenticated(false)
-      setUserRole(null)
       navigate('/')
-    }
-  }
-
-  const loadUserRole = async () => {
-    try {
-      const user = await api.getCurrentUser()
-      setUserRole(user?.role || 'user')
-    } catch (err) {
-      console.error('Error loading user role:', err)
-      setUserRole('user')
     }
   }
 
@@ -89,8 +48,6 @@ function AppContent() {
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [showAccountDropdown])
-
-  const isModerator = userRole === 'moderator' || userRole === 'admin'
 
   if (isLoading) {
     return (
@@ -232,7 +189,9 @@ function AppContent() {
 function App() {
   return (
     <Router>
-      <AppContent />
+      <UserProvider>
+        <AppContent />
+      </UserProvider>
     </Router>
   )
 }

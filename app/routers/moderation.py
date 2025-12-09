@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, Query, HTTPException
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from ..db import get_db
 from .. import schemas, models
 from ..dependencies import get_current_user, require_moderator
-from ..services import moderation_service, account_service
+from ..services import moderation_service
 
 # router specifically for general moderation
 
@@ -71,22 +71,5 @@ def delete_account(
     moderator = require_moderator(current_user)
     
     user_to_delete = db.query(models.User).filter(models.User.id == user_id).first()
-    if not user_to_delete:
-        raise HTTPException(status_code=404, detail="User not found")
     
-    # Resolve the report if report_id is provided
-    if report_id:
-        report = db.query(models.Report).filter(models.Report.id == report_id).first()
-        if report and report.status == models.ReportStatus.OPEN:
-            report.status = models.ReportStatus.RESOLVED
-            report.resolution_impact = "account_deleted"
-            audit = models.AuditLogEntry(
-                actor_id=moderator.id,
-                action_type="moderation_delete_account",
-                target_type="Report",
-                target_id=report.id,
-                details=reason or ""
-            )
-            db.add(audit)
-    
-    return account_service.delete_account(db, user_to_delete, reason)
+    return moderation_service.delete_account_as_moderator(db, moderator, user_to_delete, reason, report_id)

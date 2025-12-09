@@ -60,19 +60,6 @@ async function request(endpoint, options = {}) {
 }
 
 export const api = {
-  // Simulated user for development (stores user ID for switching)
-  getSimulatedUser: () => {
-    return localStorage.getItem('len_simulated_user_id')
-  },
-
-  setSimulatedUser: (userId) => {
-    localStorage.setItem('len_simulated_user_id', userId.toString())
-  },
-
-  clearSimulatedUser: () => {
-    localStorage.removeItem('len_simulated_user_id')
-  },
-
   // Authentication endpoints
   register: async (email, password, displayname) => {
     const response = await request('/accounts/register', {
@@ -197,6 +184,14 @@ export const api = {
     return request('/accounts/me/', {
       method: 'DELETE',
       body: { reason }
+    })
+  },
+
+  // Update own account settings
+  updateAccount: (data) => {
+    return request('/accounts/me/', {
+      method: 'PATCH',
+      body: data
     })
   },
   

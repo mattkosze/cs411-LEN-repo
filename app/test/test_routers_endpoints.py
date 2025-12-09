@@ -244,12 +244,12 @@ def test_moderation_delete_account_user_found(monkeypatch):
     def fake_require_moderator(user):
         return SimpleNamespace(id=999)
 
-    def fake_delete_account(db, user, reason):
+    def fake_delete_account_as_moderator(db, moderator, user, reason, report_id):
         assert user is fake_user
         return {"deleted_id": user.id, "reason": reason}
 
     monkeypatch.setattr(moderation, "require_moderator", fake_require_moderator)
-    monkeypatch.setattr(moderation.account_service, "delete_account", fake_delete_account)
+    monkeypatch.setattr(moderation.moderation_service, "delete_account_as_moderator", fake_delete_account_as_moderator)
 
     result = moderation.delete_account(
         user_id=5,
